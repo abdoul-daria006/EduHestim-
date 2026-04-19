@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Utilisateurs - EduHestim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #003d82 0%, #002a5c 100%); color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 45px; height: 45px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; overflow-y: auto; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .logout-section { padding: 20px; border-top: 2px solid rgba(255,255,255,0.1); }
+        .btn-logout { width: 100%; padding: 12px; background: #c1002a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .page-title { font-size: 1.8em; color: #003d82; font-weight: 700; }
+        .btn-primary { padding: 11px 22px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.92em; }
+        .btn-primary:hover { background: #002a5c; }
+        .content-area { padding: 25px 35px; overflow-y: auto; }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 22px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 18px; }
+        .stat-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6em; flex-shrink: 0; }
+        .stat-icon.all { background: #e3f2fd; } .stat-icon.ens { background: #e8f5e9; } .stat-icon.etu { background: #fff3e0; }
+        .stat-num { font-size: 2em; font-weight: 700; color: #003d82; line-height: 1; }
+        .stat-lbl { color: #888; font-size: 0.88em; margin-top: 3px; }
+        .toolbar { background: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .search-box { flex: 1; min-width: 200px; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.92em; }
+        .search-box:focus { outline: none; border-color: #003d82; }
+        .filter-tabs { display: flex; gap: 5px; }
+        .ftab { padding: 8px 16px; border: none; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.88em; background: #f0f0f0; color: #666; }
+        .ftab.active { background: #003d82; color: white; }
+        .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: #003d82; color: white; padding: 14px 16px; text-align: left; font-size: 0.88em; font-weight: 700; }
+        tbody td { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; font-size: 0.9em; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: #fafafa; }
+        .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 0.95em; flex-shrink: 0; }
+        .user-cell { display: flex; align-items: center; gap: 12px; }
+        .u-name  { font-weight: 700; color: #222; }
+        .u-email { color: #888; font-size: 0.83em; margin-top: 2px; }
+        .role-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.82em; font-weight: 700; }
+        .role-badge.enseignant { background: #e8f5e9; color: #2e7d32; }
+        .role-badge.etudiant   { background: #fff3e0; color: #e65100; }
+        .role-badge.administrateur { background: #e3f2fd; color: #003d82; }
+        .action-btns { display: flex; gap: 6px; }
+        .btn-edit   { padding: 6px 13px; background: #ff8f00; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.82em; font-weight: 600; }
+        .btn-delete { padding: 6px 13px; background: #c62828; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.82em; font-weight: 600; }
+        .empty-row td { text-align: center; padding: 40px; color: #aaa; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 18px; display: none; font-size: 0.92em; }
+        .alert.show { display: block; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .alert-error   { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 14px; padding: 30px; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal h3 { color: #003d82; font-size: 1.2em; margin-bottom: 22px; padding-bottom: 12px; border-bottom: 2px solid #f0f0f0; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; color: #003d82; font-weight: 600; font-size: 0.88em; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 11px 13px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.92em; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #003d82; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 22px; }
+        .btn-save   { flex: 1; padding: 12px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1100; align-items: center; justify-content: center; }
+        .confirm-overlay.show { display: flex; }
+        .confirm-box { background: white; border-radius: 12px; padding: 30px; width: 370px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .confirm-box h3 { color: #c62828; margin-bottom: 10px; }
+        .confirm-box p { color: #555; margin-bottom: 22px; }
+        .confirm-btns { display: flex; gap: 10px; }
+        .confirm-btns button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .btn-confirm-del    { background: #c62828; color: white; }
+        .btn-confirm-cancel { background: #f0f0f0; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-section">
+            <div class="logo-img">📚</div>
+            <div class="logo-text">EduHestim</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" onclick="navigateTo('admindash.html')">📊 Dashboard</div>
+            <div class="nav-item active">👥 Utilisateurs</div>
+            <div class="nav-item" onclick="navigateTo('GestiondesalleAdmin.html')">🏫 Salles</div>
+            <div class="nav-item" onclick="navigateTo('GestionClasses.html')">📚 Classes</div>
+            <div class="nav-item" onclick="navigateTo('GererEmploiDuTemps.html')">📅 Emplois du Temps</div>
+            <div class="nav-item" onclick="navigateTo('GestionDemandes-Admin.html')">📋 Demandes</div>
+            <div class="nav-item" onclick="navigateTo('NotifAdmin.html')">🔔 Notifications</div>
+            <div class="nav-item" onclick="navigateTo('ProfilAdmin.html')">👤 Profil</div>
+        </div>
+        <div class="logout-section">
+            <button class="btn-logout" onclick="authSystem.logout()">🚪 Déconnexion</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">👥 Gestion Utilisateurs</h1>
+            <button class="btn-primary" onclick="openCreateModal()">➕ Ajouter un utilisateur</button>
+        </div>
+        <div class="content-area">
+            <div id="alertSuccess" class="alert alert-success"></div>
+            <div id="alertError"   class="alert alert-error"></div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon all">👥</div>
+                    <div><div class="stat-num" id="statTotal">—</div><div class="stat-lbl">Total</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon ens">👨‍🏫</div>
+                    <div><div class="stat-num" id="statEns">—</div><div class="stat-lbl">Enseignants</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon etu">🎓</div>
+                    <div><div class="stat-num" id="statEtu">—</div><div class="stat-lbl">Étudiants</div></div>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <input type="text" id="searchBox" class="search-box" placeholder="🔍 Rechercher nom, email..." oninput="applyFilters()">
+                <div class="filter-tabs">
+                    <button class="ftab active" onclick="setRole('all', this)">Tous</button>
+                    <button class="ftab" onclick="setRole('enseignant', this)">👨‍🏫 Enseignants</button>
+                    <button class="ftab" onclick="setRole('etudiant', this)">🎓 Étudiants</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Utilisateur</th>
+                            <th>Rôle</th>
+                            <th>Téléphone</th>
+                            <th>Classe / Département</th>
+                            <th>Inscription</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        <tr class="empty-row"><td colspan="6">⏳ Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="formModal" onclick="if(event.target===this)this.classList.remove('show')">
+        <div class="modal">
+            <h3 id="formTitle">➕ Ajouter un utilisateur</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Prénom *</label><input type="text" id="fPrenom" placeholder="Prénom"></div>
+                <div class="form-group"><label>Nom *</label><input type="text" id="fNom" placeholder="Nom"></div>
+            </div>
+            <div class="form-group"><label>Email *</label><input type="email" id="fEmail" placeholder="email@hestim.ma"></div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rôle *</label>
+                    <select id="fRole" onchange="toggleFields()">
+                        <option value="etudiant">🎓 Étudiant</option>
+                        <option value="enseignant">👨‍🏫 Enseignant</option>
+                        <option value="administrateur">🔧 Administrateur</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Téléphone</label><input type="tel" id="fTel" placeholder="+212..."></div>
+            </div>
+            <div class="form-group" id="classeGroup">
+                <label>Classe</label>
+                <select id="fClasse"><option value="">— Sélectionner —</option></select>
+            </div>
+            <div class="form-group" id="deptGroup" style="display:none;">
+                <label>Département</label>
+                <input type="text" id="fDept" placeholder="Ex: Informatique">
+            </div>
+            <div class="form-group" id="pwdGroup">
+                <label>Mot de passe *</label>
+                <input type="password" id="fPassword" placeholder="Min. 6 caractères">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="document.getElementById('formModal').classList.remove('show')">Annuler</button>
+                <button class="btn-save" id="btnSave" onclick="saveUser()">💾 Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <h3>🗑️ Supprimer ?</h3>
+            <p id="confirmText"></p>
+            <div class="confirm-btns">
+                <button class="btn-confirm-cancel" onclick="document.getElementById('confirmOverlay').classList.remove('show')">Annuler</button>
+                <button class="btn-confirm-del" id="btnConfirmDel">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        authSystem.requireAuth('administrateur');
+        function navigateTo(page) { window.location.href = page; }
+
+        let allUsers  = [];
+        let editingId = null;
+        let roleFilter= 'all';
+
+        const COLORS = ['#003d82','#c1002a','#2e7d32','#7b1fa2','#e65100','#00796b'];
+        const getColor = name => COLORS[(name||'A').charCodeAt(0) % COLORS.length];
+        const getInit  = (p,n) => ((p||'?')[0]+(n||'?')[0]).toUpperCase();
+
+        async function loadUsers() {
+            try {
+                const [users, classes] = await Promise.all([
+                    dataManager.getUsers(),
+                    dataManager.getClasses()
+                ]);
+                allUsers = users;
+
+                const nonAdmin = users.filter(u => u.role !== 'administrateur');
+                document.getElementById('statTotal').textContent = nonAdmin.length;
+                document.getElementById('statEns').textContent   = nonAdmin.filter(u => u.role === 'enseignant').length;
+                document.getElementById('statEtu').textContent   = nonAdmin.filter(u => u.role === 'etudiant').length;
+
+                const sel = document.getElementById('fClasse');
+                sel.innerHTML = '<option value="">— Sélectionner —</option>';
+                classes.forEach(c => sel.innerHTML += `<option value="${c.code}">${c.nom} (${c.code})</option>`);
+
+                applyFilters();
+            } catch(err) {
+                showAlert('error', '❌ ' + err.message);
+            }
+        }
+
+        function setRole(r, btn) {
+            roleFilter = r;
+            document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const q = document.getElementById('searchBox').value.toLowerCase();
+            let list = allUsers.filter(u => u.role !== 'administrateur');
+            if (roleFilter !== 'all') list = list.filter(u => u.role === roleFilter);
+            if (q) list = list.filter(u =>
+                (u.nom||'').toLowerCase().includes(q) ||
+                (u.prenom||'').toLowerCase().includes(q) ||
+                (u.email||'').toLowerCase().includes(q)
+            );
+            renderTable(list);
+        }
+
+        function renderTable(users) {
+            const tbody = document.getElementById('usersBody');
+            if (!users.length) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="6">📭 Aucun utilisateur</td></tr>';
+                return;
+            }
+            const roleLabel = { enseignant: '👨‍🏫 Enseignant', etudiant: '🎓 Étudiant', administrateur: '🔧 Admin' };
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar" style="background:${getColor(u.nom)}">${getInit(u.prenom,u.nom)}</div>
+                            <div>
+                                <div class="u-name">${u.prenom||''} ${u.nom||''}</div>
+                                <div class="u-email">📧 ${u.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="role-badge ${u.role}">${roleLabel[u.role]||u.role}</span></td>
+                    <td>${u.telephone||u.tel||'—'}</td>
+                    <td>${u.classe||u.classeCode||u.departement||'—'}</td>
+                    <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—'}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-edit"   onclick="openEditModal('${u._id}')">✏️ Modifier</button>
+                            <button class="btn-delete" onclick="confirmDelete('${u._id}','${(u.prenom||'')+' '+(u.nom||'')}')">🗑️</button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+        }
+
+        function toggleFields() {
+            const r = document.getElementById('fRole').value;
+            document.getElementById('classeGroup').style.display = r === 'etudiant'   ? 'block' : 'none';
+            document.getElementById('deptGroup').style.display   = r === 'enseignant' ? 'block' : 'none';
+        }
+
+        function openCreateModal() {
+            editingId = null;
+            document.getElementById('formTitle').textContent = '➕ Ajouter un utilisateur';
+            ['fPrenom','fNom','fEmail','fTel','fDept','fPassword'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('fRole').value  = 'etudiant';
+            document.getElementById('fClasse').value = '';
+            document.getElementById('pwdGroup').style.display = 'block';
+            toggleFields();
+            document.getElementById('formModal').classList.add('show');
+        }
+
+        function openEditModal(id) {
+            const u = allUsers.find(x => x._id === id);
+            if (!u) return;
+            editingId = id;
+            document.getElementById('formTitle').textContent = '✏️ Modifier l\'utilisateur';
+            document.getElementById('fPrenom').value  = u.prenom  || '';
+            document.getElementById('fNom').value     = u.nom     || '';
+            document.getElementById('fEmail').value   = u.email   || '';
+            document.getElementById('fRole').value    = u.role    || 'etudiant';
+            document.getElementById('fTel').value     = u.telephone||u.tel||'';
+            document.getElementById('fDept').value    = u.departement||'';
+            document.getElementById('fPassword').value= '';
+            document.getElementById('pwdGroup').style.display = 'none';
+            toggleFields();
+            const sel = document.getElementById('fClasse');
+            const val = u.classe||u.classeCode||'';
+            for (let i=0;i<sel.options.length;i++) if(sel.options[i].value===val){sel.selectedIndex=i;break;}
+            document.getElementById('formModal').classList.add('show');
+        }
+
+        async function saveUser() {
+            const prenom = document.getElementById('fPrenom').value.trim();
+            const nom    = document.getElementById('fNom').value.trim();
+            const email  = document.getElementById('fEmail').value.trim();
+            const role   = document.getElementById('fRole').value;
+            const tel    = document.getElementById('fTel').value.trim();
+            const classe = document.getElementById('fClasse').value;
+            const dept   = document.getElementById('fDept').value.trim();
+            const pwd    = document.getElementById('fPassword').value;
+
+            if (!prenom||!nom||!email) { alert('Prénom, nom et email obligatoires.'); return; }
+            if (!editingId && !pwd)    { alert('Le mot de passe est obligatoire.'); return; }
+
+            const btn = document.getElementById('btnSave');
+            btn.disabled=true; btn.textContent='⏳...';
+
+            const payload = { prenom, nom, email, role, telephone: tel };
+            if (role==='etudiant'   && classe) payload.classe = classe;
+            if (role==='enseignant' && dept)   payload.departement = dept;
+
+            try {
+                if (editingId) {
+                    await dataManager.updateUser(editingId, payload);
+                    showAlert('success', `✅ ${prenom} ${nom} modifié.`);
+                } else {
+                    payload.password = pwd;
+                    await dataManager.addUser(payload);
+                    showAlert('success', `✅ ${prenom} ${nom} créé.`);
+                }
+                document.getElementById('formModal').classList.remove('show');
+                await loadUsers();
+            } catch(err) {
+                showAlert('error', '❌ ' + err.message);
+            } finally {
+                btn.disabled=false; btn.textContent='💾 Enregistrer';
+            }
+        }
+
+        function confirmDelete(id, nom) {
+            document.getElementById('confirmText').textContent = `Supprimer "${nom.trim()}" ? Cette action est irréversible.`;
+            document.getElementById('btnConfirmDel').onclick = async () => {
+                try {
+                    await dataManager.deleteUser(id);
+                    document.getElementById('confirmOverlay').classList.remove('show');
+                    showAlert('success', `✅ "${nom.trim()}" supprimé.`);
+                    await loadUsers();
+                } catch(err) { showAlert('error','❌ '+err.message); }
+            };
+            document.getElementById('confirmOverlay').classList.add('show');
+        }
+
+        function showAlert(type, msg) {
+            const el    = document.getElementById(type==='success'?'alertSuccess':'alertError');
+            const other = document.getElementById(type==='success'?'alertError':'alertSuccess');
+            other.classList.remove('show');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(()=>el.classList.remove('show'), 5000);
+            el.scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

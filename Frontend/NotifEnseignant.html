@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - EduHestim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: #003d82; color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .logo-img { width: 45px; height: 45px; object-fit: contain; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 1.6em; color: #003d82; font-weight: 600; }
+        .top-right { display: flex; align-items: center; gap: 25px; }
+        .search-box input { padding: 10px 15px; border: 1px solid #ddd; width: 300px; font-size: 0.9em; border-radius: 5px; }
+        .icon-btn { width: 40px; height: 40px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; font-size: 0.9em; border-radius: 5px; }
+        .badge-notif { position: absolute; top: 5px; right: 5px; background: #c1002a; color: white; width: 18px; height: 18px; font-size: 0.7em; display: flex; align-items: center; justify-content: center; font-weight: 600; border-radius: 50%; }
+        .content-area { padding: 30px 35px; overflow-y: auto; }
+        .notifications-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 18px; border: 1px solid #ddd; background: white; color: #666; cursor: pointer; transition: all 0.3s; font-size: 0.9em; border-radius: 5px; }
+        .filter-btn.active { background: #003d82; color: white; border-color: #003d82; }
+        .actions-group { display: flex; gap: 10px; }
+        .action-btn { padding: 10px 20px; border: none; cursor: pointer; font-size: 0.9em; transition: all 0.3s; border-radius: 5px; }
+        .btn-mark-read { background: #003d82; color: white; }
+        .btn-delete-all { background: #c1002a; color: white; }
+        .notifications-container { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-radius: 8px; overflow: hidden; }
+        .notification-group { border-bottom: 1px solid #f0f0f0; }
+        .group-title { padding: 15px 25px; background: #f8f9fa; color: #666; font-weight: 600; font-size: 0.9em; text-transform: uppercase; }
+        .notification-item { padding: 20px 25px; border-bottom: 1px solid #f5f5f5; display: flex; align-items: start; gap: 15px; cursor: pointer; transition: all 0.3s; position: relative; }
+        .notification-item:hover { background: #f8f9fa; }
+        .notification-item.unread { background: #e3f2fd; }
+        .notification-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0; }
+        .icon-info    { background: #e3f2fd; color: #003d82; }
+        .icon-success { background: #e8f5e9; color: #2e7d32; }
+        .icon-warning { background: #fff3e0; color: #f57c00; }
+        .icon-urgent  { background: #ffebee; color: #c62828; }
+        .notification-content { flex: 1; }
+        .notification-title { color: #003d82; font-weight: 600; font-size: 1em; margin-bottom: 5px; }
+        .notification-time { color: #999; font-size: 0.8em; }
+        .notification-text { color: #666; font-size: 0.9em; line-height: 1.5; margin-bottom: 8px; }
+        .notification-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tag { padding: 3px 10px; font-size: 0.75em; border-radius: 12px; font-weight: 500; }
+        .tag-admin       { background: #fff3e0; color: #f57c00; }
+        .tag-reservation { background: #e8f5e9; color: #2e7d32; }
+        .tag-system      { background: #e3f2fd; color: #003d82; }
+        .tag-urgent      { background: #ffebee; color: #c62828; }
+        .notification-actions { position: absolute; right: 20px; top: 20px; display: flex; gap: 8px; opacity: 0; transition: opacity 0.3s; }
+        .notification-item:hover .notification-actions { opacity: 1; }
+        .notif-action-btn { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8em; transition: all 0.3s; }
+        .btn-mark { background: #e3f2fd; color: #003d82; }
+        .btn-mark:hover { background: #003d82; color: white; }
+        .btn-delete { background: #ffebee; color: #c62828; }
+        .btn-delete:hover { background: #c62828; color: white; }
+        .unread-badge { width: 10px; height: 10px; background: #c1002a; border-radius: 50%; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); }
+        @keyframes slideOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(100%); } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-section" onclick="navigateTo('Enseignantdash.html')">
+            <img src="Images/logo.jpg" alt="Logo" class="logo-img">
+            <div class="logo-text">EduHestim</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" onclick="navigateTo('Enseignantdash.html')">Dashboard</div>
+            <div class="nav-item" onclick="navigateTo('EmploiedutempsEnseignant.html')">Emploi du Temps</div>
+            <div class="nav-item" onclick="navigateTo('FairedesdemandesEnseignant.html')">Demandes</div>
+            <div class="nav-item" onclick="navigateTo('MesreservationsEnseignant.html')">Réservations</div>
+            <div class="nav-item active">Notifications</div>
+            <div class="nav-item" onclick="navigateTo('ProfilEnseignant.html')">Mon Profil</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">Notifications</h1>
+            <div class="top-right">
+                <div class="search-box"><input type="text" placeholder="Rechercher..." id="searchInput"></div>
+                <div class="icon-btn"><span class="badge-notif" id="notifCount">4</span>🔔</div>
+            </div>
+        </div>
+        <div class="content-area">
+            <div class="notifications-header">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterNotifications('all', this)">Toutes</button>
+                    <button class="filter-btn" onclick="filterNotifications('unread', this)">Non lues</button>
+                    <button class="filter-btn" onclick="filterNotifications('admin', this)">Admin</button>
+                    <button class="filter-btn" onclick="filterNotifications('reservation', this)">Réservations</button>
+                    <button class="filter-btn" onclick="filterNotifications('urgent', this)">Urgentes</button>
+                </div>
+                <div class="actions-group">
+                    <button class="action-btn btn-mark-read" onclick="markAllAsRead()">Tout marquer comme lu</button>
+                    <button class="action-btn btn-delete-all" onclick="deleteAllRead()">Supprimer les lues</button>
+                </div>
+            </div>
+
+            <div class="notifications-container" id="notificationsContainer">
+                <div class="notification-group">
+                    <div class="group-title">Aujourd'hui</div>
+
+                    <div class="notification-item unread" data-type="admin" data-id="1">
+                        <span class="unread-badge"></span>
+                        <div class="notification-icon icon-success">✓</div>
+                        <div class="notification-content">
+                            <div class="notification-title">Demande de changement approuvée</div>
+                            <div class="notification-time">Il y a 1 heure</div>
+                            <div class="notification-text">Votre dernière demande de réservation a été approuvée par l'administration.</div>
+                            <div class="notification-tags"><span class="tag tag-admin">Admin</span><span class="tag tag-reservation">Réservation</span></div>
+                        </div>
+                        <div class="notification-actions">
+                            <button class="notif-action-btn btn-mark" onclick="toggleRead(1)">✓</button>
+                            <button class="notif-action-btn btn-delete" onclick="deleteNotification(1)">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="notification-item unread" data-type="system" data-id="2">
+                        <span class="unread-badge"></span>
+                        <div class="notification-icon icon-info">📅</div>
+                        <div class="notification-content">
+                            <div class="notification-title">Mise à jour emploi du temps</div>
+                            <div class="notification-time">Il y a 3 heures</div>
+                            <div class="notification-text">L'emploi du temps de la semaine prochaine a été mis à jour.</div>
+                            <div class="notification-tags"><span class="tag tag-system">Système</span></div>
+                        </div>
+                        <div class="notification-actions">
+                            <button class="notif-action-btn btn-mark" onclick="toggleRead(2)">✓</button>
+                            <button class="notif-action-btn btn-delete" onclick="deleteNotification(2)">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notification-group">
+                    <div class="group-title">Hier</div>
+
+                    <div class="notification-item unread" data-type="admin" data-id="3">
+                        <span class="unread-badge"></span>
+                        <div class="notification-icon icon-warning">⚠️</div>
+                        <div class="notification-content">
+                            <div class="notification-title">Demande en attente de validation</div>
+                            <div class="notification-time">Hier à 16h30</div>
+                            <div class="notification-text">Votre demande de réservation est en cours de traitement par l'administration.</div>
+                            <div class="notification-tags"><span class="tag tag-admin">Admin</span><span class="tag tag-reservation">Réservation</span></div>
+                        </div>
+                        <div class="notification-actions">
+                            <button class="notif-action-btn btn-mark" onclick="toggleRead(3)">✓</button>
+                            <button class="notif-action-btn btn-delete" onclick="deleteNotification(3)">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="notification-item unread" data-type="urgent" data-id="4">
+                        <span class="unread-badge"></span>
+                        <div class="notification-icon icon-urgent">🚨</div>
+                        <div class="notification-content">
+                            <div class="notification-title">Maintenance salle</div>
+                            <div class="notification-time">Hier à 10h00</div>
+                            <div class="notification-text">Intervention technique prévue dans une de vos salles de cours. Veuillez prévoir une alternative.</div>
+                            <div class="notification-tags"><span class="tag tag-urgent">Urgent</span><span class="tag tag-admin">Admin</span></div>
+                        </div>
+                        <div class="notification-actions">
+                            <button class="notif-action-btn btn-mark" onclick="toggleRead(4)">✓</button>
+                            <button class="notif-action-btn btn-delete" onclick="deleteNotification(4)">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        requireAuth('enseignant');
+
+        function navigateTo(page) { window.location.href = page; }
+
+        function filterNotifications(type, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.notification-item').forEach(n => {
+                if (type === 'all') n.style.display = 'flex';
+                else if (type === 'unread') n.style.display = n.classList.contains('unread') ? 'flex' : 'none';
+                else n.style.display = n.dataset.type === type ? 'flex' : 'none';
+            });
+            document.querySelectorAll('.notification-group').forEach(g => {
+                const vis = [...g.querySelectorAll('.notification-item')].filter(n => n.style.display !== 'none');
+                g.style.display = vis.length ? 'block' : 'none';
+            });
+        }
+
+        function toggleRead(id) {
+            const n = document.querySelector(`[data-id="${id}"]`);
+            n.classList.toggle('unread');
+            const b = n.querySelector('.unread-badge');
+            if (b) b.style.display = n.classList.contains('unread') ? 'block' : 'none';
+            updateCount();
+        }
+
+        function deleteNotification(id) {
+            if (!confirm('Supprimer cette notification ?')) return;
+            const n = document.querySelector(`[data-id="${id}"]`);
+            n.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => { n.remove(); updateCount(); checkEmpty(); }, 300);
+        }
+
+        function markAllAsRead() {
+            document.querySelectorAll('.notification-item.unread').forEach(n => {
+                n.classList.remove('unread');
+                const b = n.querySelector('.unread-badge');
+                if (b) b.style.display = 'none';
+            });
+            updateCount();
+        }
+
+        function deleteAllRead() {
+            const reads = document.querySelectorAll('.notification-item:not(.unread)');
+            if (!reads.length) { alert('Aucune notification lue'); return; }
+            if (!confirm(`Supprimer ${reads.length} notification(s) lue(s) ?`)) return;
+            reads.forEach(n => { n.style.animation = 'slideOut 0.3s ease-out'; setTimeout(() => n.remove(), 300); });
+            setTimeout(checkEmpty, 350);
+        }
+
+        function updateCount() {
+            const c = document.querySelectorAll('.notification-item.unread').length;
+            const b = document.getElementById('notifCount');
+            b.textContent = c;
+            b.style.display = c > 0 ? 'flex' : 'none';
+        }
+
+        function checkEmpty() {
+            document.querySelectorAll('.notification-group').forEach(g => {
+                if (!g.querySelectorAll('.notification-item').length) g.remove();
+            });
+            if (!document.querySelectorAll('.notification-item').length) {
+                document.getElementById('notificationsContainer').innerHTML =
+                    '<div style="text-align:center;padding:60px;color:#999;"><div style="font-size:4em;opacity:0.3;">🔔</div><p>Aucune notification</p></div>';
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('.notification-item').forEach(n => {
+                const t = n.querySelector('.notification-title').textContent.toLowerCase();
+                const p = n.querySelector('.notification-text').textContent.toLowerCase();
+                n.style.display = (t.includes(q) || p.includes(q)) ? 'flex' : 'none';
+            });
+            document.querySelectorAll('.notification-group').forEach(g => {
+                const vis = [...g.querySelectorAll('.notification-item')].filter(n => n.style.display !== 'none');
+                g.style.display = vis.length ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

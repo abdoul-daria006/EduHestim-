@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 EduHestim - Accueil Projet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 50px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 40px; }
+        .header h1 { font-size: 3.5em; color: #003d82; margin-bottom: 15px; }
+        .header .emoji { font-size: 4em; margin-bottom: 20px; }
+        .header p { font-size: 1.3em; color: #666; margin-bottom: 30px; }
+        .status-badges { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .badge { padding: 10px 25px; background: #2e7d32; color: white; border-radius: 25px; font-weight: 600; font-size: 0.95em; }
+        .section { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 30px; }
+        .section h2 { color: #003d82; font-size: 2em; margin-bottom: 25px; border-bottom: 3px solid #c1002a; padding-bottom: 15px; }
+        .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 25px; }
+        .account-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #003d82; }
+        .account-card h3 { color: #003d82; font-size: 1.4em; margin-bottom: 15px; }
+        .account-info { margin: 8px 0; color: #333; font-size: 0.95em; }
+        .account-info strong { color: #003d82; display: inline-block; width: 120px; }
+        .quick-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 25px; }
+        .link-btn { display: block; padding: 25px; background: #003d82; color: white; text-decoration: none; border-radius: 12px; text-align: center; font-weight: 600; font-size: 1.1em; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .link-btn:hover { background: #002a5c; transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .link-btn .emoji { font-size: 2em; display: block; margin-bottom: 10px; }
+        .scenario-steps { background: #e3f2fd; padding: 20px; border-radius: 10px; border-left: 4px solid #2196f3; margin: 20px 0; }
+        .scenario-steps h4 { color: #1976d2; margin-bottom: 15px; font-size: 1.2em; }
+        .scenario-steps ol { margin-left: 20px; line-height: 2; }
+        .scenario-steps li { color: #1565c0; margin: 10px 0; }
+        .warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .warning-box h4 { color: #856404; margin-bottom: 10px; }
+        .warning-box p { color: #856404; margin: 5px 0; }
+        .success-box { background: #d4edda; border-left: 4px solid #28a745; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .success-box h4 { color: #155724; margin-bottom: 10px; }
+        .success-box ul { margin-left: 20px; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="emoji">📚</div>
+            <h1>EduHestim</h1>
+            <p>Système de Gestion Académique - Projet Complet</p>
+            <div class="status-badges">
+                <span class="badge">✅ Backend MongoDB</span>
+                <span class="badge">✅ API REST Node.js</span>
+                <span class="badge">✅ JWT Auth</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Accès Rapide</h2>
+            <div class="quick-links">
+                <a href="Connexion.html" class="link-btn"><span class="emoji">🔐</span>Page de Connexion</a>
+                <a href="admindash.html" class="link-btn"><span class="emoji">👨‍💼</span>Dashboard Admin</a>
+                <a href="Etudiantdash.html" class="link-btn"><span class="emoji">👨‍🎓</span>Dashboard Étudiant</a>
+                <a href="GestionDemandes-Admin.html" class="link-btn"><span class="emoji">📋</span>Gestion Demandes</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔐 Comptes par Défaut</h2>
+            <div class="accounts-grid">
+                <div class="account-card">
+                    <h3>👨‍💼 Administrateur</h3>
+                    <div class="account-info"><strong>Email:</strong> admin@hestim.ma</div>
+                    <div class="account-info"><strong>Mot de passe:</strong> admin123</div>
+                    <div class="account-info"><strong>Rôle:</strong> administrateur</div>
+                </div>
+                <div class="account-card">
+                    <h3>👨‍🏫 Enseignant</h3>
+                    <div class="account-info"><strong>Email:</strong> enseignant@hestim.ma</div>
+                    <div class="account-info"><strong>Mot de passe:</strong> prof123</div>
+                    <div class="account-info"><strong>Rôle:</strong> enseignant</div>
+                </div>
+                <div class="account-card">
+                    <h3>👨‍🎓 Étudiant</h3>
+                    <div class="account-info"><strong>Email:</strong> etudiant@hestim.ma</div>
+                    <div class="account-info"><strong>Mot de passe:</strong> etud123</div>
+                    <div class="account-info"><strong>Rôle:</strong> etudiant</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎬 Scénario pour la Vidéo</h2>
+            <div class="scenario-steps">
+                <h4>📝 Étape 1 : Connexion Admin</h4>
+                <ol>
+                    <li>Ouvrir <strong>Connexion.html</strong></li>
+                    <li>Se connecter avec <strong>admin@hestim.ma / admin123</strong></li>
+                    <li>Explorer le dashboard</li>
+                </ol>
+            </div>
+            <div class="scenario-steps">
+                <h4>➕ Étape 2 : Créer un Compte</h4>
+                <ol>
+                    <li>Aller sur "Créer Utilisateur"</li>
+                    <li>Créer un nouvel étudiant</li>
+                    <li>Se déconnecter puis reconnecter avec le nouveau compte</li>
+                </ol>
+            </div>
+            <div class="scenario-steps">
+                <h4>📋 Étape 3 : Demande de Réservation</h4>
+                <ol>
+                    <li>Connecté en tant qu'étudiant</li>
+                    <li>Aller sur "Faire une Demande" → remplir et soumettre</li>
+                    <li>Aller sur "Mes Demandes" → voir "En attente"</li>
+                </ol>
+            </div>
+            <div class="scenario-steps">
+                <h4>✅ Étape 4 : Admin Traite la Demande</h4>
+                <ol>
+                    <li>Reconnecter en admin → "Gestion des Demandes"</li>
+                    <li>Approuver avec commentaire</li>
+                    <li>Reconnecter en étudiant → voir statut "Approuvée"</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Fichiers Essentiels</h2>
+            <div class="success-box">
+                <h4>Fichier JavaScript (OBLIGATOIRE) :</h4>
+                <ul>
+                    <li>📄 <strong>api.js</strong> - Authentification + Gestion données (MongoDB)</li>
+                </ul>
+                <h4 style="margin-top: 20px;">Backend :</h4>
+                <ul>
+                    <li>🖥️ <strong>server.js</strong> - API Node.js/Express sur port 5000</li>
+                    <li>🗄️ <strong>MongoDB</strong> - Base de données</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⚠️ Points Importants</h2>
+            <div class="warning-box">
+                <h4>AVANT DE LANCER :</h4>
+                <p>✓ Démarrer le backend : <code>node server.js</code></p>
+                <p>✓ MongoDB doit être actif</p>
+                <p>✓ Tous les fichiers .html dans le même dossier que api.js</p>
+                <p>✓ Utiliser Chrome ou Firefox</p>
+            </div>
+        </div>
+
+        <div class="section" style="text-align: center; background: linear-gradient(135deg, #003d82 0%, #002a5c 100%); color: white;">
+            <h2 style="color: white; border-bottom-color: rgba(255,255,255,0.3);">🎉 Projet Prêt !</h2>
+            <p style="font-size: 1.3em; margin: 20px 0;">Architecture MongoDB + Node.js + JWT complète</p>
+            <p style="font-size: 1.1em; opacity: 0.9;">Bonne chance ! 🚀</p>
+        </div>
+    </div>
+</body>
+</html>

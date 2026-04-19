@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un Cours - EduHestim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #003d82 0%, #002a5c 100%); color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .logo-img { width: 45px; height: 45px; background: white; border-radius: 8px; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 1.8em; color: #003d82; font-weight: 700; }
+        .content-area { padding: 30px 35px; overflow-y: auto; }
+        .form-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 800px; margin: 0 auto; }
+        .form-header { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
+        .form-header h2 { color: #003d82; font-size: 1.6em; margin-bottom: 8px; }
+        .form-header p { color: #666; font-size: 0.95em; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #003d82; font-weight: 600; font-size: 0.95em; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95em; font-family: inherit; transition: all 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #003d82; box-shadow: 0 0 0 3px rgba(0,61,130,0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn-submit { width: 100%; padding: 15px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1.1em; transition: all 0.3s; margin-top: 20px; }
+        .btn-submit:hover { background: #002a5c; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,61,130,0.3); }
+        .success-message { background: #e8f5e9; color: #2e7d32; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2e7d32; display: none; }
+        .success-message.show { display: block; }
+        .error-message { background: #ffebee; color: #c62828; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #c62828; display: none; }
+        .error-message.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-section" onclick="navigateTo('admindash.html')">
+            <div class="logo-img"></div>
+            <div class="logo-text">EduHestim</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" onclick="navigateTo('admindash.html')">📊 Dashboard</div>
+            <div class="nav-item" onclick="navigateTo('PagelistedesUtilisateurs.html')">👥 Utilisateurs</div>
+            <div class="nav-item" onclick="navigateTo('GestiondesalleAdmin.html')">🏫 Salles</div>
+            <div class="nav-item" onclick="navigateTo('GestionClasses.html')">📚 Classes</div>
+            <div class="nav-item active">➕ Créer Cours</div>
+            <div class="nav-item" onclick="navigateTo('GererEmploiDuTemps.html')">📅 Emplois du Temps</div>
+            <div class="nav-item" onclick="navigateTo('GestionDemandes-Admin.html')">📋 Demandes</div>
+            <div class="nav-item" onclick="navigateTo('NotifAdmin.html')">🔔 Notifications</div>
+            <div class="nav-item" onclick="navigateTo('ProfilAdmin.html')">👤 Profil</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">Créer un Cours</h1>
+        </div>
+        <div class="content-area">
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Nouveau Cours</h2>
+                    <p>Remplissez les informations du cours à créer</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Nom du Cours *</label>
+                    <input type="text" id="nomCours" required placeholder="Ex: Programmation Orientée Objet">
+                </div>
+                <div class="form-group">
+                    <label>Code du Cours *</label>
+                    <input type="text" id="codeCours" required placeholder="Ex: INF301">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type de Cours *</label>
+                        <select id="typeCours" required>
+                            <option value="">Sélectionnez</option>
+                            <option value="CM">Cours Magistral (CM)</option>
+                            <option value="TD">Travaux Dirigés (TD)</option>
+                            <option value="TP">Travaux Pratiques (TP)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre d'heures *</label>
+                        <input type="number" id="nbHeures" required min="1" placeholder="2">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Enseignant *</label>
+                        <select id="enseignant" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Classe *</label>
+                        <select id="classe" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Salle *</label>
+                        <select id="salle" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Jour de la Semaine *</label>
+                        <select id="jourSemaine" required>
+                            <option value="">Sélectionnez</option>
+                            <option value="Lundi">Lundi</option>
+                            <option value="Mardi">Mardi</option>
+                            <option value="Mercredi">Mercredi</option>
+                            <option value="Jeudi">Jeudi</option>
+                            <option value="Vendredi">Vendredi</option>
+                            <option value="Samedi">Samedi</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Heure de Début *</label>
+                        <input type="time" id="heureDebut" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Heure de Fin *</label>
+                        <input type="time" id="heureFin" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="description" rows="4" placeholder="Description du cours (optionnel)"></textarea>
+                </div>
+                <button class="btn-submit" onclick="submitCours()">Créer le Cours</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        requireAuth('administrateur');
+
+        function navigateTo(page) { window.location.href = page; }
+
+        async function loadEnseignants() {
+            try {
+                const users = await dataManager.getUsers();
+                const enseignants = users.filter(u => u.role === 'enseignant');
+                const select = document.getElementById('enseignant');
+                select.innerHTML = '<option value="">Sélectionnez un enseignant</option>';
+                enseignants.forEach(ens => {
+                    select.innerHTML += `<option value="${ens._id}">${ens.nom} ${ens.prenom}</option>`;
+                });
+            } catch (err) {
+                console.error('Erreur chargement enseignants:', err);
+            }
+        }
+
+        async function loadClasses() {
+            try {
+                const classes = await dataManager.getClasses();
+                const select = document.getElementById('classe');
+                select.innerHTML = '<option value="">Sélectionnez une classe</option>';
+                classes.forEach(c => {
+                    select.innerHTML += `<option value="${c._id}">${c.nom}</option>`;
+                });
+            } catch (err) {
+                console.error('Erreur chargement classes:', err);
+            }
+        }
+
+        async function loadSalles() {
+            try {
+                const salles = await dataManager.getSalles();
+                const select = document.getElementById('salle');
+                select.innerHTML = '<option value="">Sélectionnez une salle</option>';
+                salles.forEach(s => {
+                    select.innerHTML += `<option value="${s._id}">${s.nom} (${s.capacite} places)</option>`;
+                });
+            } catch (err) {
+                console.error('Erreur chargement salles:', err);
+            }
+        }
+
+        async function submitCours() {
+            const heureDebut = document.getElementById('heureDebut').value;
+            const heureFin   = document.getElementById('heureFin').value;
+
+            if (heureDebut >= heureFin) {
+                alert("L'heure de fin doit être après l'heure de début");
+                return;
+            }
+
+            const enseignantSelect = document.getElementById('enseignant');
+            const classeSelect     = document.getElementById('classe');
+            const salleSelect      = document.getElementById('salle');
+
+            const coursData = {
+                matiere:       document.getElementById('nomCours').value,
+                classeCode:    classeSelect.options[classeSelect.selectedIndex].text,
+                classeId:      classeSelect.value,
+                enseignantId:  enseignantSelect.value,
+                enseignantNom: enseignantSelect.options[enseignantSelect.selectedIndex].text,
+                salle:         salleSelect.options[salleSelect.selectedIndex].text,
+                jour:          document.getElementById('jourSemaine').value,
+                heureDebut,
+                heureFin,
+                type:          document.getElementById('typeCours').value,
+            };
+
+            try {
+                await dataManager.addCours(coursData);
+                const msg = document.getElementById('successMessage');
+                msg.textContent = `✓ Cours "${coursData.matiere}" créé avec succès !`;
+                msg.classList.add('show');
+                document.getElementById('nomCours').value = '';
+                document.getElementById('codeCours').value = '';
+                document.getElementById('description').value = '';
+                setTimeout(() => msg.classList.remove('show'), 4000);
+            } catch (err) {
+                const msg = document.getElementById('errorMessage');
+                msg.textContent = '❌ Erreur : ' + err.message;
+                msg.classList.add('show');
+                setTimeout(() => msg.classList.remove('show'), 4000);
+            }
+        }
+
+        // Init
+        loadEnseignants();
+        loadClasses();
+        loadSalles();
+    </script>
+</body>
+</html>

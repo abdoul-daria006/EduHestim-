@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Classes - EduHestim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #003d82 0%, #002a5c 100%); color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .logo-img { width: 45px; height: 45px; background: white; border-radius: 8px; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .logout-btn { padding: 15px 20px; background: #c1002a; color: white; cursor: pointer; text-align: center; font-weight: 600; margin: 10px; border-radius: 8px; transition: background 0.3s; }
+        .logout-btn:hover { background: #a0001f; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 1.8em; color: #003d82; font-weight: 700; }
+        .btn-primary { padding: 12px 24px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-primary:hover { background: #002a5c; transform: translateY(-2px); }
+        .content-area { padding: 30px 35px; overflow-y: auto; }
+
+        /* Stats */
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: white; border-radius: 10px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); display: flex; align-items: center; gap: 16px; }
+        .stat-icon { font-size: 2em; }
+        .stat-val { font-size: 1.9em; font-weight: 700; color: #003d82; line-height: 1; }
+        .stat-label { font-size: 0.85em; color: #888; margin-top: 4px; }
+
+        /* Grid */
+        .classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .class-card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s; border-left: 4px solid #003d82; }
+        .class-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+        .class-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+        .class-name { font-size: 1.15em; font-weight: 700; color: #003d82; }
+        .class-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .badge-code { background: #e3f2fd; color: #003d82; padding: 3px 10px; border-radius: 20px; font-size: 0.78em; font-weight: 700; }
+        .badge-niveau { background: #f3e5f5; color: #7b1fa2; padding: 3px 10px; border-radius: 20px; font-size: 0.78em; font-weight: 600; }
+        .info-row { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 0.88em; color: #555; }
+        .info-row strong { color: #333; min-width: 95px; }
+        .progress-wrap { margin: 10px 0 4px; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.8em; color: #888; margin-bottom: 4px; }
+        .progress-bar { background: #f0f2f5; border-radius: 20px; height: 7px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #003d82, #0066cc); height: 100%; border-radius: 20px; transition: width 0.6s ease; }
+        .class-actions { display: flex; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f0f0; }
+        .btn-edit, .btn-delete { flex: 1; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.88em; transition: all 0.3s; }
+        .btn-edit { background: #e3f2fd; color: #003d82; }
+        .btn-edit:hover { background: #003d82; color: white; }
+        .btn-delete { background: #ffebee; color: #c1002a; }
+        .btn-delete:hover { background: #c1002a; color: white; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 35px; border-radius: 14px; max-width: 520px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 1.4em; color: #003d82; font-weight: 700; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 2px solid #f0f0f0; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 7px; color: #003d82; font-weight: 600; font-size: 0.88em; }
+        .form-group input, .form-group select { width: 100%; padding: 11px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.93em; font-family: inherit; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #003d82; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+        .btn-cancel { flex: 1; padding: 12px; background: #e0e0e0; color: #666; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-save { flex: 1; padding: 12px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.3s; }
+        .btn-save:hover:not(:disabled) { background: #002a5c; }
+        .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Alerts */
+        .alert { padding: 14px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; display: none; }
+        .alert.show { display: block; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .alert-error   { background: #ffebee; color: #c1002a; border-left: 4px solid #c1002a; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .loading { text-align: center; padding: 40px; color: #666; grid-column: 1/-1; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo-section" onclick="navigateTo('admindash.html')">
+        <div class="logo-img"></div>
+        <div class="logo-text">EduHestim</div>
+    </div>
+    <div class="nav-menu">
+        <div class="nav-item" onclick="navigateTo('admindash.html')">📊 Dashboard</div>
+        <div class="nav-item" onclick="navigateTo('PagelistedesUtilisateurs.html')">👥 Utilisateurs</div>
+        <div class="nav-item" onclick="navigateTo('GestiondesalleAdmin.html')">🏫 Salles</div>
+        <div class="nav-item active">📚 Classes</div>
+        <div class="nav-item" onclick="navigateTo('GererEmploiDuTemps.html')">📅 Emplois du Temps</div>
+        <div class="nav-item" onclick="navigateTo('GestionDemandes-Admin.html')">📋 Demandes</div>
+        <div class="nav-item" onclick="navigateTo('NotifAdmin.html')">🔔 Notifications</div>
+        <div class="nav-item" onclick="navigateTo('ProfilAdmin.html')">👤 Profil</div>
+    </div>
+    <div class="logout-btn" onclick="authSystem.logout()">🚪 Déconnexion</div>
+</div>
+
+<div class="main-content">
+    <div class="top-bar">
+        <h1 class="page-title">📚 Gestion des Classes</h1>
+        <button class="btn-primary" onclick="openModal()">+ Créer une Classe</button>
+    </div>
+    <div class="content-area">
+        <div id="alertBox" class="alert"></div>
+
+        <!-- KPI Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div>
+                    <div class="stat-val" id="statTotal">—</div>
+                    <div class="stat-label">Classes au total</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div>
+                    <div class="stat-val" id="statEtudiants">—</div>
+                    <div class="stat-label">Étudiants inscrits</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎓</div>
+                <div>
+                    <div class="stat-val" id="statFilieres">—</div>
+                    <div class="stat-label">Filières distinctes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grille classes -->
+        <div id="classesGrid" class="classes-grid">
+            <div class="loading">⏳ Chargement...</div>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div style="font-size:4em;margin-bottom:20px;">📚</div>
+            <h3>Aucune classe créée</h3>
+            <p>Commencez par créer votre première classe</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="classModal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title" id="modalTitle">Créer une Classe</h2>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Code * <span style="color:#888;font-weight:400;">(ex: 3A-INFO)</span></label>
+                <input type="text" id="code" placeholder="3A-INFO" required>
+            </div>
+            <div class="form-group">
+                <label>Niveau *</label>
+                <select id="niveau" required>
+                    <option value="">Sélectionnez</option>
+                    <option>1A</option><option>2A</option><option>3A</option>
+                    <option>4A</option><option>5A</option>
+                    <option>L1</option><option>L2</option><option>L3</option>
+                    <option>M1</option><option>M2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Nom complet *</label>
+            <input type="text" id="nom" placeholder="Ex: 3ème Année Génie Informatique" required>
+        </div>
+
+        <div class="form-group">
+            <label>Filière *</label>
+            <select id="filiere" required>
+                <option value="">Sélectionnez</option>
+                <option>Génie Informatique</option>
+                <option>Génie Industriel</option>
+                <option>Génie Civil</option>
+                <option>Génie Électrique</option>
+                <option>Architecture</option>
+                <option>Management</option>
+                <option>Finance</option>
+                <option>Marketing</option>
+                <option>Informatique</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Effectif maximum *</label>
+            <input type="number" id="effectif" min="1" max="500" placeholder="35" required>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+            <button class="btn-save" id="btnSave" onclick="saveClasse()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+    authSystem.requireAuth('administrateur');
+
+    let editingId  = null;
+    let allClasses = [];
+
+    function navigateTo(p) { window.location.href = p; }
+
+    // ── Alertes ─────────────────────────────────────────────
+    function showAlert(msg, type = 'success') {
+        const box = document.getElementById('alertBox');
+        box.textContent = msg;
+        box.className = `alert alert-${type} show`;
+        setTimeout(() => box.classList.remove('show'), 4000);
+    }
+
+    // ── Chargement ───────────────────────────────────────────
+    async function loadClasses() {
+        const grid = document.getElementById('classesGrid');
+        grid.innerHTML = '<div class="loading">⏳ Chargement...</div>';
+        try {
+            allClasses = await dataManager.getClasses();
+            renderStats(allClasses);
+            renderGrid(allClasses);
+        } catch(err) {
+            grid.innerHTML = `<div style="padding:40px;text-align:center;color:#c62828;">❌ Erreur : ${err.message}</div>`;
+        }
+    }
+
+    function renderStats(classes) {
+        document.getElementById('statTotal').textContent = classes.length;
+        // Nb inscrits = longueur tableau etudiants (populate)
+        const totalEtu = classes.reduce((s, c) => s + (Array.isArray(c.etudiants) ? c.etudiants.length : 0), 0);
+        document.getElementById('statEtudiants').textContent = totalEtu;
+        const filieres = new Set(classes.map(c => c.filiere).filter(Boolean));
+        document.getElementById('statFilieres').textContent = filieres.size;
+    }
+
+    function renderGrid(classes) {
+        const grid  = document.getElementById('classesGrid');
+        const empty = document.getElementById('emptyState');
+
+        if (!classes.length) {
+            grid.style.display = 'none';
+            empty.style.display = 'block';
+            return;
+        }
+        grid.style.display = 'grid';
+        empty.style.display = 'none';
+
+        grid.innerHTML = classes.map(c => {
+            const nbInscrits = Array.isArray(c.etudiants) ? c.etudiants.length : 0;
+            const effectif   = c.effectif || 1;
+            const pct        = Math.min(Math.round((nbInscrits / effectif) * 100), 100);
+            const fillColor  = pct >= 90 ? '#c1002a' : pct >= 70 ? '#ff8f00' : '#003d82';
+
+            return `
+            <div class="class-card">
+                <div class="class-header">
+                    <div class="class-name">${c.nom || '—'}</div>
+                    <div class="class-badges">
+                        <span class="badge-code">${c.code || '—'}</span>
+                        <span class="badge-niveau">${c.niveau || '—'}</span>
+                    </div>
+                </div>
+                <div class="info-row">🎓 <strong>Filière :</strong> ${c.filiere || '—'}</div>
+                <div class="info-row">👥 <strong>Effectif max :</strong> ${effectif} étudiants</div>
+                <div class="info-row">✅ <strong>Inscrits :</strong> ${nbInscrits} étudiants</div>
+                <div class="progress-wrap">
+                    <div class="progress-label">
+                        <span>Taux de remplissage</span>
+                        <span style="color:${fillColor};font-weight:700;">${pct}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:${pct}%;background:${fillColor};"></div>
+                    </div>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-edit"   onclick="editClasse('${c._id}')">✏️ Modifier</button>
+                    <button class="btn-delete" onclick="deleteClasse('${c._id}','${(c.nom||'').replace(/'/g,"\\'")}')">🗑️ Supprimer</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ── Modal ────────────────────────────────────────────────
+    function openModal(id = null) {
+        editingId = id;
+        document.getElementById('modalTitle').textContent = id ? 'Modifier la Classe' : 'Créer une Classe';
+        if (!id) {
+            ['code','nom','effectif'].forEach(f => document.getElementById(f).value = '');
+            ['niveau','filiere'].forEach(f => document.getElementById(f).value = '');
+        }
+        document.getElementById('classModal').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('classModal').classList.remove('show');
+        editingId = null;
+    }
+
+    async function editClasse(id) {
+        const c = allClasses.find(x => x._id === id);
+        if (!c) return;
+        document.getElementById('code').value     = c.code     || '';
+        document.getElementById('nom').value      = c.nom      || '';
+        document.getElementById('niveau').value   = c.niveau   || '';
+        document.getElementById('filiere').value  = c.filiere  || '';
+        document.getElementById('effectif').value = c.effectif || '';
+        openModal(id);
+    }
+
+    async function deleteClasse(id, nom) {
+        if (!confirm(`Supprimer la classe "${nom}" ?`)) return;
+        try {
+            await dataManager.deleteClasse(id);
+            showAlert(`Classe "${nom}" supprimée avec succès ✅`);
+            loadClasses();
+        } catch(err) {
+            showAlert('Erreur : ' + err.message, 'error');
+        }
+    }
+
+    async function saveClasse() {
+        const data = {
+            code:     document.getElementById('code').value.trim().toUpperCase(),
+            nom:      document.getElementById('nom').value.trim(),
+            niveau:   document.getElementById('niveau').value,
+            filiere:  document.getElementById('filiere').value,
+            effectif: parseInt(document.getElementById('effectif').value) || 0,
+        };
+
+        if (!data.code || !data.nom || !data.niveau || !data.filiere || !data.effectif) {
+            showAlert('Veuillez remplir tous les champs obligatoires', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btnSave');
+        btn.disabled    = true;
+        btn.textContent = '⏳ Enregistrement...';
+
+        try {
+            if (editingId) {
+                await dataManager.updateClasse(editingId, data);
+                showAlert('Classe modifiée avec succès ✅');
+            } else {
+                await dataManager.addClass(data);
+                showAlert('Classe créée avec succès ✅');
+            }
+            closeModal();
+            loadClasses();
+        } catch(err) {
+            showAlert('Erreur : ' + err.message, 'error');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Enregistrer';
+        }
+    }
+
+    // Fermer en cliquant overlay
+    document.getElementById('classModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('classModal')) closeModal();
+    });
+
+    loadClasses();
+</script>
+</body>
+</html>

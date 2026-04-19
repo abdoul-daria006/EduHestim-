@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emplois du Temps - EduHestim Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #003d82 0%, #002a5c 100%); color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 45px; height: 45px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; overflow-y: auto; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .logout-section { padding: 20px; border-top: 2px solid rgba(255,255,255,0.1); }
+        .btn-logout { width: 100%; padding: 12px; background: #c1002a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .page-title { font-size: 1.8em; color: #003d82; font-weight: 700; }
+        .top-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        select.filter-select { padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.92em; min-width: 180px; }
+        .btn-primary { padding: 10px 20px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.92em; transition: all 0.2s; }
+        .btn-primary:hover { background: #002a5c; }
+        .btn-danger { padding: 6px 12px; background: #c62828; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 600; }
+        .btn-edit  { padding: 6px 12px; background: #ff8f00; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 600; }
+        .content-area { padding: 25px 35px; overflow-y: auto; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; background: white; padding: 6px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); width: fit-content; }
+        .tab { padding: 9px 20px; border: none; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.9em; background: transparent; color: #666; transition: all 0.2s; }
+        .tab.active { background: #003d82; color: white; }
+        /* Vue grille */
+        .calendar-wrapper { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow-x: auto; }
+        .calendar-grid { display: grid; grid-template-columns: 110px repeat(6, 1fr); min-width: 1000px; }
+        .cal-header { background: #003d82; color: white; padding: 14px 10px; font-weight: 700; text-align: center; font-size: 0.9em; }
+        .cal-header.day { background: #002a5c; }
+        .time-label { background: #f8f9fa; text-align: center; font-weight: 700; color: #003d82; border-right: 2px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; font-size: 0.82em; display: flex; align-items: center; justify-content: center; min-height: 90px; }
+        .cal-cell { border: 1px solid #eee; min-height: 90px; padding: 5px; position: relative; }
+        .course-block { padding: 8px 10px; border-radius: 7px; color: white; font-size: 0.78em; cursor: pointer; transition: all 0.2s; position: relative; }
+        .course-block:hover { transform: scale(1.02); box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+        .course-block.CM { background: linear-gradient(135deg, #003d82, #005cb2); }
+        .course-block.TD { background: linear-gradient(135deg, #c1002a, #e53935); }
+        .course-block.TP { background: linear-gradient(135deg, #2e7d32, #43a047); }
+        .c-name { font-weight: 700; margin-bottom: 3px; }
+        .c-info { opacity: 0.88; font-size: 0.9em; }
+        .c-actions { display: flex; gap: 4px; margin-top: 6px; }
+        .c-actions button { padding: 3px 7px; font-size: 0.75em; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; color: white; }
+        .c-actions .edit-btn   { background: rgba(255,255,255,0.3); }
+        .c-actions .delete-btn { background: rgba(0,0,0,0.3); }
+        .c-actions button:hover { opacity: 0.85; }
+        /* Vue liste */
+        .list-view { display: none; }
+        .list-view.show { display: block; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        thead th { background: #003d82; color: white; padding: 14px 15px; text-align: left; font-size: 0.88em; }
+        tbody td { padding: 13px 15px; border-bottom: 1px solid #f0f0f0; font-size: 0.9em; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: #fafafa; }
+        .type-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 700; color: white; }
+        .type-CM { background: #003d82; }
+        .type-TD { background: #c1002a; }
+        .type-TP { background: #2e7d32; }
+        .td-actions { display: flex; gap: 6px; }
+        .legend { background: white; padding: 15px 22px; margin-top: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .legend span { font-weight: 700; color: #003d82; }
+        .leg-item { display: flex; align-items: center; gap: 8px; font-size: 0.9em; color: #555; }
+        .leg-dot { width: 16px; height: 16px; border-radius: 4px; }
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 14px; padding: 30px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal h3 { color: #003d82; font-size: 1.2em; margin-bottom: 22px; padding-bottom: 12px; border-bottom: 2px solid #f0f0f0; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; color: #003d82; font-weight: 600; font-size: 0.88em; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 11px 13px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.92em; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #003d82; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 22px; }
+        .btn-save   { flex: 1; padding: 12px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .btn-cancel { flex: 1; padding: 12px; background: #f0f0f0; color: #333; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        /* Confirm delete */
+        .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1100; align-items: center; justify-content: center; }
+        .confirm-overlay.show { display: flex; }
+        .confirm-box { background: white; border-radius: 12px; padding: 30px; width: 380px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .confirm-box h3 { color: #c62828; margin-bottom: 12px; }
+        .confirm-box p { color: #555; margin-bottom: 22px; font-size: 0.95em; }
+        .confirm-btns { display: flex; gap: 10px; }
+        .confirm-btns button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .btn-confirm-del { background: #c62828; color: white; }
+        .btn-confirm-cancel { background: #f0f0f0; color: #333; }
+        .alert { padding: 12px 15px; border-radius: 8px; margin-bottom: 18px; display: none; font-size: 0.92em; }
+        .alert.show { display: block; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .alert-error   { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-section">
+            <div class="logo-img">📚</div>
+            <div class="logo-text">EduHestim</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" onclick="navigateTo('admindash.html')">📊 Dashboard</div>
+            <div class="nav-item" onclick="navigateTo('PagelistedesUtilisateurs.html')">👥 Utilisateurs</div>
+            <div class="nav-item" onclick="navigateTo('GestiondesalleAdmin.html')">🏫 Salles</div>
+            <div class="nav-item" onclick="navigateTo('GestionClasses.html')">📚 Classes</div>
+            <div class="nav-item active">📅 Emplois du Temps</div>
+            <div class="nav-item" onclick="navigateTo('GestionDemandes-Admin.html')">📋 Demandes</div>
+            <div class="nav-item" onclick="navigateTo('NotifAdmin.html')">🔔 Notifications</div>
+            <div class="nav-item" onclick="navigateTo('ProfilAdmin.html')">👤 Profil</div>
+        </div>
+        <div class="logout-section">
+            <button class="btn-logout" onclick="authSystem.logout()">🚪 Déconnexion</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">📅 Emplois du Temps</h1>
+            <div class="top-controls">
+                <select id="classeFilter" class="filter-select" onchange="applyFilter()">
+                    <option value="">Toutes les classes</option>
+                </select>
+                <button class="btn-primary" onclick="openCreateModal()">➕ Ajouter un cours</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div id="alertSuccess" class="alert alert-success"></div>
+            <div id="alertError"   class="alert alert-error"></div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchView('grid', this)">📅 Grille</button>
+                <button class="tab"        onclick="switchView('list', this)">📋 Liste</button>
+            </div>
+
+            <!-- Vue grille -->
+            <div id="gridView">
+                <div class="calendar-wrapper">
+                    <div id="calendarGrid" class="calendar-grid">
+                        <div style="grid-column:1/-1;padding:50px;text-align:center;color:#aaa;">⏳ Chargement...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vue liste -->
+            <div id="listView" class="list-view">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Matière</th>
+                            <th>Type</th>
+                            <th>Enseignant</th>
+                            <th>Classe</th>
+                            <th>Salle</th>
+                            <th>Jour</th>
+                            <th>Horaire</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listBody">
+                        <tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa;">⏳ Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="legend">
+                <span>Légende :</span>
+                <div class="leg-item"><div class="leg-dot" style="background:#003d82;"></div> Cours Magistral (CM)</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#c1002a;"></div> Travaux Dirigés (TD)</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#2e7d32;"></div> Travaux Pratiques (TP)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal créer/modifier cours -->
+    <div class="modal-overlay" id="formModal" onclick="closeFormModal(event)">
+        <div class="modal">
+            <h3 id="formTitle">➕ Ajouter un cours</h3>
+            <div class="form-group">
+                <label>Matière *</label>
+                <input type="text" id="fMatiere" placeholder="Ex: Algorithmique, Analyse...">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select id="fType">
+                        <option value="CM">Cours Magistral (CM)</option>
+                        <option value="TD">Travaux Dirigés (TD)</option>
+                        <option value="TP">Travaux Pratiques (TP)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Classe *</label>
+                    <select id="fClasse"></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Enseignant *</label>
+                    <select id="fEnseignant"></select>
+                </div>
+                <div class="form-group">
+                    <label>Salle *</label>
+                    <select id="fSalle"></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Jour *</label>
+                    <select id="fJour">
+                        <option>Lundi</option><option>Mardi</option><option>Mercredi</option>
+                        <option>Jeudi</option><option>Vendredi</option><option>Samedi</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Heure Début *</label>
+                    <select id="fHeureDebut">
+                        <option value="08:00">08:00</option>
+                        <option value="10:15">10:15</option>
+                        <option value="14:00">14:00</option>
+                        <option value="16:15">16:15</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Heure Fin *</label>
+                <select id="fHeureFin">
+                    <option value="10:00">10:00</option>
+                    <option value="12:15">12:15</option>
+                    <option value="16:00">16:00</option>
+                    <option value="18:15">18:15</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="document.getElementById('formModal').classList.remove('show')">Annuler</button>
+                <button class="btn-save"   id="btnSave" onclick="saveCours()">💾 Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm suppression -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <h3>🗑️ Supprimer le cours ?</h3>
+            <p id="confirmText">Cette action est irréversible.</p>
+            <div class="confirm-btns">
+                <button class="btn-confirm-cancel" onclick="document.getElementById('confirmOverlay').classList.remove('show')">Annuler</button>
+                <button class="btn-confirm-del"    id="btnConfirmDel">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        // ✅ FIX: authSystem.requireAuth
+        const currentUser = authSystem.requireAuth('administrateur');
+        function navigateTo(page) { window.location.href = page; }
+
+        const JOURS    = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        const CRENEAUX = [
+            { debut: '08:00', label: '08h00<br>10h00' },
+            { debut: '10:15', label: '10h15<br>12h15' },
+            { debut: '14:00', label: '14h00<br>16h00' },
+            { debut: '16:15', label: '16h15<br>18h15' },
+        ];
+
+        let allCours    = [];
+        let editingId   = null;
+        let currentView = 'grid';
+        let currentFilter = '';
+
+        // ── Vue switch ─────────────────────────────
+        function switchView(v, btn) {
+            currentView = v;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            if (v === 'grid') {
+                document.getElementById('gridView').style.display = 'block';
+                document.getElementById('listView').classList.remove('show');
+            } else {
+                document.getElementById('gridView').style.display = 'none';
+                document.getElementById('listView').classList.add('show');
+            }
+            render();
+        }
+
+        function applyFilter() {
+            currentFilter = document.getElementById('classeFilter').value;
+            render();
+        }
+
+        // ── Chargement initial ──────────────────────
+        async function loadAll() {
+            try {
+                const [cours, classes, enseignants, salles] = await Promise.all([
+                    dataManager.getEmploisDuTemps(),
+                    dataManager.getClasses(),
+                    dataManager.getUsersByRole('enseignant'),
+                    dataManager.getSalles()
+                ]);
+                allCours = cours;
+
+                // Filtre select
+                const sel = document.getElementById('classeFilter');
+                sel.innerHTML = '<option value="">Toutes les classes</option>';
+                classes.forEach(c => sel.innerHTML += `<option value="${c.code}">${c.nom} (${c.code})</option>`);
+
+                // Form selects
+                document.getElementById('fClasse').innerHTML =
+                    classes.map(c => `<option value="${c.code}">${c.nom} (${c.code})</option>`).join('');
+                document.getElementById('fEnseignant').innerHTML =
+                    enseignants.map(e => `<option value="${e._id}" data-nom="${e.prenom} ${e.nom}">${e.prenom} ${e.nom}</option>`).join('');
+                document.getElementById('fSalle').innerHTML =
+                    salles.map(s => `<option value="${s.nom}">${s.nom} (${s.type}, ${s.capacite} pl.)</option>`).join('');
+
+                render();
+            } catch(err) {
+                showAlert('error', '❌ Erreur de chargement : ' + err.message);
+            }
+        }
+
+        // ── Rendu ───────────────────────────────────
+        function render() {
+            const filtered = currentFilter
+                ? allCours.filter(c => c.classeCode === currentFilter)
+                : allCours;
+            currentView === 'grid' ? renderGrid(filtered) : renderList(filtered);
+        }
+
+        function renderGrid(cours) {
+            const grid = document.getElementById('calendarGrid');
+            let html = `<div class="cal-header">Horaires</div>`;
+            JOURS.forEach(j => html += `<div class="cal-header day">${j}</div>`);
+
+            CRENEAUX.forEach(({ debut, label }) => {
+                html += `<div class="time-label">${label}</div>`;
+                JOURS.forEach(jour => {
+                    const c = cours.find(x => x.jour === jour && x.heureDebut === debut);
+                    html += `<div class="cal-cell">`;
+                    if (c) {
+                        html += `<div class="course-block ${c.type || 'CM'}">
+                            <div class="c-name">${c.matiere}</div>
+                            <div class="c-info">${c.enseignantNom || ''}<br>🏫 ${c.salle}<br>👥 ${c.classeCode}</div>
+                            <div class="c-actions">
+                                <button class="edit-btn"   onclick="event.stopPropagation();openEditModal('${c._id}')">✏️</button>
+                                <button class="delete-btn" onclick="event.stopPropagation();confirmDelete('${c._id}', '${c.matiere}')">🗑️</button>
+                            </div>
+                        </div>`;
+                    }
+                    html += `</div>`;
+                });
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function renderList(cours) {
+            const tbody = document.getElementById('listBody');
+            if (cours.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa;">📭 Aucun cours</td></tr>';
+                return;
+            }
+            tbody.innerHTML = cours.map(c => `
+                <tr>
+                    <td><strong>${c.matiere}</strong></td>
+                    <td><span class="type-badge type-${c.type}">${c.type}</span></td>
+                    <td>${c.enseignantNom || '—'}</td>
+                    <td>${c.classeCode}</td>
+                    <td>${c.salle}</td>
+                    <td>${c.jour}</td>
+                    <td>${c.heureDebut} – ${c.heureFin}</td>
+                    <td>
+                        <div class="td-actions">
+                            <button class="btn-edit"   onclick="openEditModal('${c._id}')">✏️ Modifier</button>
+                            <button class="btn-danger" onclick="confirmDelete('${c._id}', '${c.matiere}')">🗑️ Suppr.</button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+        }
+
+        // ── Modal Create ────────────────────────────
+        function openCreateModal() {
+            editingId = null;
+            document.getElementById('formTitle').textContent = '➕ Ajouter un cours';
+            document.getElementById('fMatiere').value    = '';
+            document.getElementById('fType').value       = 'CM';
+            document.getElementById('fJour').value       = 'Lundi';
+            document.getElementById('fHeureDebut').value = '08:00';
+            document.getElementById('fHeureFin').value   = '10:00';
+            document.getElementById('formModal').classList.add('show');
+        }
+
+        function openEditModal(id) {
+            const c = allCours.find(x => x._id === id);
+            if (!c) return;
+            editingId = id;
+            document.getElementById('formTitle').textContent = '✏️ Modifier le cours';
+            document.getElementById('fMatiere').value    = c.matiere;
+            document.getElementById('fType').value       = c.type;
+            document.getElementById('fJour').value       = c.jour;
+            document.getElementById('fHeureDebut').value = c.heureDebut;
+            document.getElementById('fHeureFin').value   = c.heureFin;
+            // Tenter de sélectionner les valeurs
+            setSelectByValue('fClasse',      c.classeCode);
+            setSelectByValue('fEnseignant',  c.enseignantId?._id || c.enseignantId);
+            setSelectByValue('fSalle',       c.salle);
+            document.getElementById('formModal').classList.add('show');
+        }
+
+        function setSelectByValue(id, val) {
+            const sel = document.getElementById(id);
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === val) { sel.selectedIndex = i; return; }
+            }
+        }
+
+        function closeFormModal(e) {
+            if (e.target === document.getElementById('formModal'))
+                document.getElementById('formModal').classList.remove('show');
+        }
+
+        // ── Sauvegarder ─────────────────────────────
+        async function saveCours() {
+            const matiere   = document.getElementById('fMatiere').value.trim();
+            const type      = document.getElementById('fType').value;
+            const classeCode= document.getElementById('fClasse').value;
+            const enseignantSel = document.getElementById('fEnseignant');
+            const enseignantId  = enseignantSel.value;
+            const enseignantNom = enseignantSel.options[enseignantSel.selectedIndex]?.dataset.nom || '';
+            const salle     = document.getElementById('fSalle').value;
+            const jour      = document.getElementById('fJour').value;
+            const heureDebut= document.getElementById('fHeureDebut').value;
+            const heureFin  = document.getElementById('fHeureFin').value;
+
+            if (!matiere || !classeCode || !enseignantId || !salle) {
+                alert('Veuillez remplir tous les champs.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSave');
+            btn.disabled = true; btn.textContent = '⏳...';
+
+            const payload = { matiere, type, classeCode, enseignantId, enseignantNom, salle, jour, heureDebut, heureFin };
+
+            try {
+                if (editingId) {
+                    await dataManager.updateEmploiDuTemps(editingId, payload);
+                    showAlert('success', `✅ Cours "${matiere}" modifié avec succès.`);
+                } else {
+                    await dataManager.addEmploiDuTemps(payload);
+                    showAlert('success', `✅ Cours "${matiere}" ajouté avec succès.`);
+                }
+                document.getElementById('formModal').classList.remove('show');
+                await loadAll();
+            } catch(err) {
+                showAlert('error', '❌ Erreur : ' + err.message);
+            } finally {
+                btn.disabled = false; btn.textContent = '💾 Enregistrer';
+            }
+        }
+
+        // ── Supprimer ───────────────────────────────
+        function confirmDelete(id, nom) {
+            document.getElementById('confirmText').textContent = `Supprimer le cours "${nom}" ?`;
+            document.getElementById('btnConfirmDel').onclick = async () => {
+                try {
+                    await dataManager.deleteEmploiDuTemps(id);
+                    document.getElementById('confirmOverlay').classList.remove('show');
+                    showAlert('success', `✅ Cours "${nom}" supprimé.`);
+                    await loadAll();
+                } catch(err) {
+                    showAlert('error', '❌ ' + err.message);
+                }
+            };
+            document.getElementById('confirmOverlay').classList.add('show');
+        }
+
+        function showAlert(type, msg) {
+            const el    = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            const other = document.getElementById(type === 'success' ? 'alertError' : 'alertSuccess');
+            other.classList.remove('show');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        loadAll();
+    </script>
+</body>
+</html>

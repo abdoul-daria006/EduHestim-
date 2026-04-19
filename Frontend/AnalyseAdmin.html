@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse de Données - EduHestim</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        :root{--blue:#003d82;--dkblue:#002560;--red:#c1002a;--green:#2e7d32;--orange:#ff8f00;--purple:#7b1fa2;--teal:#00796b;--brown:#5d4037;--bg:#f0f2f5;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);display:flex;min-height:100vh;}
+        .sidebar{width:260px;background:linear-gradient(180deg,#003d82 0%,#002a5c 100%);color:white;position:fixed;height:100vh;display:flex;flex-direction:column;box-shadow:4px 0 10px rgba(0,0,0,.1);z-index:100;}
+        .logo-section{padding:25px 20px;border-bottom:2px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px;cursor:pointer;}
+        .logo-img{width:45px;height:45px;background:white;border-radius:8px;}
+        .logo-text{font-size:1.4em;font-weight:700;}
+        .nav-menu{flex:1;padding:20px 0;overflow-y:auto;}
+        .nav-item{padding:14px 20px;color:rgba(255,255,255,.7);cursor:pointer;transition:all .3s;font-size:.95em;}
+        .nav-item:hover{background:rgba(255,255,255,.1);color:white;}
+        .nav-item.active{background:var(--red);color:white;}
+        .logout-btn{padding:15px 20px;background:var(--red);color:white;cursor:pointer;text-align:center;font-weight:600;margin:10px;border-radius:8px;}
+        .logout-btn:hover{background:#a0001f;}
+        .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;}
+        .top-bar{background:white;padding:18px 35px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;}
+        .page-title{font-size:1.7em;color:var(--blue);font-weight:700;}
+        .top-actions{display:flex;gap:12px;align-items:center;}
+        .source-badge{padding:6px 14px;border-radius:20px;font-size:.82em;font-weight:600;}
+        .badge-live{background:#e8f5e9;color:var(--green);border:1px solid var(--green);}
+        .badge-excel{background:#fff3e0;color:var(--orange);border:1px solid var(--orange);}
+        .btn-refresh{padding:9px 20px;background:var(--blue);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.88em;}
+        .btn-refresh:hover{background:var(--dkblue);}
+        .content{padding:28px 35px;}
+        .source-tabs{display:flex;gap:10px;margin-bottom:26px;}
+        .tab-btn{padding:10px 24px;border:2px solid #e0e0e0;background:white;border-radius:8px;cursor:pointer;font-weight:600;font-size:.9em;color:#666;transition:all .3s;}
+        .tab-btn.active{border-color:var(--blue);background:var(--blue);color:white;}
+        .tab-btn:hover:not(.active){border-color:var(--blue);color:var(--blue);}
+
+        /* ── 7 KPI globaux ── */
+        .kpi-global{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:30px;}
+        .kpi-global-card{background:white;border-radius:12px;padding:16px 12px;box-shadow:0 2px 10px rgba(0,0,0,.07);text-align:center;border-top:4px solid transparent;transition:transform .2s;cursor:default;}
+        .kpi-global-card:hover{transform:translateY(-3px);}
+        .kpi-global-card.c1{border-top-color:var(--blue);}
+        .kpi-global-card.c2{border-top-color:var(--red);}
+        .kpi-global-card.c3{border-top-color:var(--orange);}
+        .kpi-global-card.c4{border-top-color:var(--teal);}
+        .kpi-global-card.c5{border-top-color:var(--purple);}
+        .kpi-global-card.c6{border-top-color:var(--green);}
+        .kpi-global-card.c7{border-top-color:var(--brown);}
+        .kpi-global-icon{font-size:1.6em;margin-bottom:6px;}
+        .kpi-global-val{font-size:1.4em;font-weight:800;line-height:1;color:var(--blue);}
+        .kpi-global-val.red{color:var(--red);}
+        .kpi-global-val.orange{color:var(--orange);}
+        .kpi-global-val.teal{color:var(--teal);}
+        .kpi-global-val.purple{color:var(--purple);}
+        .kpi-global-val.green{color:var(--green);}
+        .kpi-global-val.brown{color:var(--brown);}
+        .kpi-global-label{font-size:.74em;color:#888;margin-top:5px;line-height:1.3;}
+        .kpi-global-sub{font-size:.7em;color:#aaa;margin-top:3px;}
+
+        /* ── Sections ── */
+        .section-header{display:flex;align-items:center;gap:12px;margin:30px 0 16px;}
+        .section-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1em;flex-shrink:0;}
+        .icon-blue{background:#e3f2fd;}.icon-green{background:#e8f5e9;}.icon-red{background:#ffebee;}
+        .icon-teal{background:#e0f2f1;}.icon-purple{background:#f3e5f5;}.icon-brown{background:#efebe9;}
+        .section-title{font-size:1.15em;font-weight:700;color:var(--blue);}
+        .section-sub{font-size:.8em;color:#888;margin-top:2px;}
+        .section-divider{flex:1;height:2px;background:linear-gradient(90deg,#e0e0e0,transparent);}
+
+        /* ── KPI cards internes ── */
+        .kpi-row{display:grid;gap:12px;margin-bottom:16px;}
+        .kpi-row-2{grid-template-columns:repeat(2,1fr);}
+        .kpi-row-3{grid-template-columns:repeat(3,1fr);}
+        .kpi-row-4{grid-template-columns:repeat(4,1fr);}
+        .kpi-card{background:white;border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;gap:12px;border-left:4px solid transparent;}
+        .kpi-card.blue{border-left-color:var(--blue);}.kpi-card.red{border-left-color:var(--red);}
+        .kpi-card.green{border-left-color:var(--green);}.kpi-card.orange{border-left-color:var(--orange);}
+        .kpi-card.purple{border-left-color:var(--purple);}.kpi-card.teal{border-left-color:var(--teal);}
+        .kpi-card.brown{border-left-color:var(--brown);}
+        .kpi-icon{font-size:1.6em;}
+        .kpi-val{font-size:1.6em;font-weight:700;color:var(--blue);line-height:1;}
+        .kpi-label{font-size:.78em;color:#888;margin-top:3px;}
+
+        /* ── Charts ── */
+        .charts-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+        .charts-3{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px;}
+        .chart-card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.07);}
+        .chart-title{font-size:.92em;font-weight:700;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+        .chart-title span{background:var(--bg);padding:3px 10px;border-radius:20px;font-size:.78em;color:#888;font-weight:500;}
+        .chart-wrap{position:relative;}
+        .chart-wrap.h300{height:300px;}.chart-wrap.h260{height:260px;}
+        .chart-wrap.h220{height:220px;}.chart-wrap.h180{height:180px;}
+
+        /* ── Heatmap ── */
+        .heatmap-wrap{overflow-x:auto;}
+        .heatmap-table{width:100%;border-collapse:collapse;font-size:.8em;}
+        .heatmap-table th{background:var(--blue);color:white;padding:7px 8px;text-align:center;font-weight:600;}
+        .heatmap-table td{padding:9px 6px;text-align:center;font-weight:700;border:2px solid white;}
+        .heatmap-row-label{background:#f5f7fc;color:var(--blue);font-weight:600;text-align:left!important;padding:7px 10px!important;white-space:nowrap;}
+
+        /* ── Top5 ── */
+        .top5-list{display:flex;flex-direction:column;gap:10px;padding-top:4px;}
+        .top5-item{display:flex;align-items:center;gap:10px;}
+        .top5-rank{width:24px;height:24px;border-radius:50%;background:var(--blue);color:white;font-weight:700;font-size:.78em;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .top5-rank.gold{background:var(--orange);}
+        .top5-bar-wrap{flex:1;}
+        .top5-label{font-size:.8em;font-weight:600;color:#333;margin-bottom:3px;}
+        .top5-bar-bg{background:#f0f0f0;border-radius:4px;height:7px;}
+        .top5-bar-fill{height:7px;border-radius:4px;transition:width .5s;}
+        .top5-count{font-size:.82em;font-weight:700;color:var(--blue);min-width:28px;text-align:right;}
+
+        /* ── Synthèse ── */
+        .synthese-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;}
+        .synthese-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+        .synthese-card{border-radius:10px;padding:16px;}
+        .synthese-card.s-blue{background:var(--blue);color:white;}
+        .synthese-card.s-red{background:var(--red);color:white;}
+        .synthese-card.s-green{background:var(--green);color:white;}
+        .synthese-card.s-teal{background:var(--teal);color:white;}
+        .synthese-card.s-purple{background:var(--purple);color:white;}
+        .synthese-card.s-orange{background:var(--orange);color:white;}
+        .synthese-card.s-brown{background:var(--brown);color:white;}
+        .synthese-card h4{font-size:.88em;margin-bottom:10px;opacity:.9;}
+        .synthese-item{font-size:.8em;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.2);display:flex;justify-content:space-between;gap:6px;}
+        .synthese-item:last-child{border:none;padding-top:7px;font-style:italic;opacity:.85;}
+        .synthese-val{font-weight:700;white-space:nowrap;}
+
+        /* ── Loading / Error ── */
+        .loading-overlay{display:flex;align-items:center;justify-content:center;padding:80px;color:#888;font-size:1em;gap:12px;}
+        .spinner{width:22px;height:22px;border:3px solid #e0e0e0;border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .error-box{background:#ffebee;color:var(--red);padding:16px;border-radius:8px;border-left:4px solid var(--red);}
+
+        @media(max-width:1400px){.kpi-global{grid-template-columns:repeat(4,1fr);}}
+        @media(max-width:1100px){
+            .kpi-global{grid-template-columns:repeat(3,1fr);}
+            .charts-2,.charts-3{grid-template-columns:1fr;}
+            .kpi-row-4{grid-template-columns:repeat(2,1fr);}
+            .synthese-grid{grid-template-columns:repeat(2,1fr);}
+            .synthese-grid-3{grid-template-columns:1fr 1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo-section" onclick="go('admindash.html')">
+        <div class="logo-img"></div>
+        <div class="logo-text">EduHestim</div>
+    </div>
+    <div class="nav-menu">
+        <div class="nav-item" onclick="go('admindash.html')">📊 Dashboard</div>
+        <div class="nav-item" onclick="go('PagelistedesUtilisateurs.html')">👥 Utilisateurs</div>
+        <div class="nav-item" onclick="go('GestiondesalleAdmin.html')">🏫 Salles</div>
+        <div class="nav-item" onclick="go('GestionClasses.html')">📚 Classes</div>
+        <div class="nav-item" onclick="go('GererEmploiDuTemps.html')">📅 Emplois du Temps</div>
+        <div class="nav-item" onclick="go('GestionDemandes-Admin.html')">📋 Demandes</div>
+        <div class="nav-item" onclick="go('NotifAdmin.html')">🔔 Notifications</div>
+        <div class="nav-item active">📈 Analyse de Données</div>
+        <div class="nav-item" onclick="go('ProfilAdmin.html')">👤 Profil</div>
+    </div>
+    <div class="logout-btn" onclick="authSystem.logout()">🚪 Déconnexion</div>
+</div>
+
+<div class="main-content">
+    <div class="top-bar">
+        <h1 class="page-title">📈 Analyse de Données — 7 KPIs</h1>
+        <div class="top-actions">
+            <span class="source-badge badge-live"  id="badgeLive">🟢 MongoDB Live</span>
+            <span class="source-badge badge-excel" id="badgeExcel" style="display:none">📊 Dataset Faker</span>
+            <button class="btn-refresh" onclick="loadAll()">🔄 Actualiser</button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="source-tabs">
+            <button class="tab-btn active" id="tabLive"  onclick="switchSource('live')">🟢 Données MongoDB Live</button>
+            <button class="tab-btn"        id="tabExcel" onclick="switchSource('excel')">📊 Dataset Excel (Faker)</button>
+        </div>
+        <div id="main"></div>
+    </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+authSystem.requireAuth('administrateur');
+
+const C = {
+    blue:'#003d82',red:'#c1002a',green:'#2e7d32',orange:'#ff8f00',
+    purple:'#7b1fa2',teal:'#00796b',brown:'#5d4037',
+    multi:['#003d82','#c1002a','#2e7d32','#ff8f00','#7b1fa2','#00796b','#5d4037','#0288d1']
+};
+let src = 'live', cx = {};
+
+function go(p){ window.location.href = p; }
+
+function switchSource(s){
+    src = s;
+    document.getElementById('tabLive').classList.toggle('active', s==='live');
+    document.getElementById('tabExcel').classList.toggle('active', s==='excel');
+    document.getElementById('badgeLive').style.display  = s==='live'  ? '' : 'none';
+    document.getElementById('badgeExcel').style.display = s==='excel' ? '' : 'none';
+    loadAll();
+}
+
+function destroyAll(){ Object.values(cx).forEach(c=>{ try{c.destroy();}catch(e){} }); cx={}; }
+
+async function loadAll(){
+    destroyAll();
+    document.getElementById('main').innerHTML = '<div class="loading-overlay"><div class="spinner"></div> Chargement des 7 KPIs...</div>';
+    try {
+        src === 'live' ? await loadLive() : renderAll(...fakerData());
+    } catch(e) {
+        document.getElementById('main').innerHTML = `<div class="error-box">❌ ${e.message}</div>`;
+    }
+}
+
+function authH(){
+    const t = localStorage.getItem('eduhestim_token');
+    return { 'Content-Type':'application/json', 'Authorization': t ? `Bearer ${t}` : '' };
+}
+
+async function apiFetch(ep){
+    const r = await fetch(`http://localhost:5000/api/analyse/${ep}`, { headers: authH() });
+    if (!r.ok) throw new Error(`Erreur ${r.status} — /api/analyse/${ep}`);
+    return r.json();
+}
+
+async function loadLive(){
+    const [occ, vol, conf, cren, modif, dispo, spc] = await Promise.all([
+        apiFetch('occupation'),
+        apiFetch('volume-horaire'),
+        apiFetch('conflits'),
+        apiFetch('creneaux'),
+        apiFetch('modifications'),
+        apiFetch('disponibilite'),
+        apiFetch('seances-par-classe'),
+    ]);
+    renderAll(occ, vol, conf, cren, modif, dispo, spc);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DONNÉES FAKER STATIQUES (7 axes)
+───────────────────────────────────────────────────────────── */
+function fakerData(){
+    const occ = {
+        kpi:{ totalSalles:125, tauxMoyen:10.7, salleMax:'Amphi-03', tauxMax:18.8, surcharge:12, totalResaUniques:7200 },
+        top10:[
+            {nom:'Amphi-03',type:'Amphitheatre',taux:18.8},{nom:'Info-07',type:'Informatique',taux:17.2},
+            {nom:'Norm-12',type:'Normale',taux:16.5},{nom:'Labo-02',type:'Laboratoire',taux:15.9},
+            {nom:'Amphi-01',type:'Amphitheatre',taux:15.3},{nom:'Info-04',type:'Informatique',taux:14.8},
+            {nom:'Norm-08',type:'Normale',taux:14.1},{nom:'Labo-05',type:'Laboratoire',taux:13.7},
+            {nom:'Norm-15',type:'Normale',taux:13.2},{nom:'Info-11',type:'Informatique',taux:12.9},
+        ],
+        parType:{ Normale:3200, Informatique:2100, Amphitheatre:1800, Laboratoire:1400 }
+    };
+    const vol = {
+        kpi:{ totalEns:40, moyVol:48.2, seuil:72.4, nbSurcharge:8, tauxSurcharge:20.0 },
+        top15:[
+            {nom:'M. Martin',dept:'Informatique',vol:96,surcharge:true},
+            {nom:'F. Bernard',dept:'Mathématiques',vol:88,surcharge:true},
+            {nom:'A. Dupont',dept:'Informatique',vol:84,surcharge:true},
+            {nom:'S. Moreau',dept:'Physique',vol:80,surcharge:true},
+            {nom:'C. Laurent',dept:'Informatique',vol:76,surcharge:true},
+            {nom:'P. Simon',dept:'Management',vol:74,surcharge:true},
+            {nom:'L. Michel',dept:'Mathématiques',vol:72,surcharge:false},
+            {nom:'J. Leroy',dept:'Informatique',vol:68,surcharge:false},
+            {nom:'N. Petit',dept:'Physique',vol:64,surcharge:false},
+            {nom:'O. Garcia',dept:'Management',vol:60,surcharge:false},
+            {nom:'R. Thomas',dept:'Informatique',vol:56,surcharge:false},
+            {nom:'V. Robert',dept:'Mathématiques',vol:52,surcharge:false},
+            {nom:'K. David',dept:'Physique',vol:48,surcharge:false},
+            {nom:'H. Martinez',dept:'Management',vol:44,surcharge:false},
+            {nom:'T. Wilson',dept:'Informatique',vol:40,surcharge:false},
+        ],
+        parDept:[
+            {dept:'Informatique',moy:62.4},{dept:'Mathématiques',moy:58.1},
+            {dept:'Physique',moy:54.7},{dept:'Management',moy:50.2},{dept:'Langues',moy:42.8},
+        ]
+    };
+    const conf = {
+        kpi:{ total:80, resolus:52, nonResolus:28, tauxResolution:65.0, tauxNonResolution:35.0,
+              typeMax:'Double réservation', jourMax:'Mardi' },
+        parType:{'Double réservation':22,'Conflit horaire':18,'Chevauchement':16,'Salle indispo.':14,'Capacité insuf.':10},
+        parJour:{ Lundi:18, Mardi:22, Mercredi:12, Jeudi:14, Vendredi:10, Samedi:4 },
+        parCreneau:{'08:00':24,'10:15':28,'14:00':18,'16:15':10},
+        resParType:{
+            'Double réservation':{r:14,nr:8},'Conflit horaire':{r:12,nr:6},
+            'Chevauchement':{r:10,nr:6},'Salle indispo.':{r:10,nr:4},'Capacité insuf.':{r:6,nr:4}
+        }
+    };
+    const cren = {
+        kpi:{ creneauMax:'10h15-12h15', countMax:320, jourMax:'Mardi', countJourMax:185,
+              top1Label:'Mardi 10h15-12h15', totalDemandes:8534 },
+        parCreneau:{'08:00':210,'10:15':320,'14:00':265,'16:15':145},
+        parJour:{ Lundi:165, Mardi:185, Mercredi:148, Jeudi:162, Vendredi:140, Samedi:60 },
+        top5:[
+            {label:'Mardi 10h15-12h15',count:95},{label:'Lundi 10h15-12h15',count:88},
+            {label:'Jeudi 10h15-12h15',count:82},{label:'Mercredi 14h-16h',count:78},
+            {label:'Vendredi 08h-10h',count:72},
+        ],
+        heatmap:{
+            Lundi:{'08:00':38,'10:15':88,'14:00':72,'16:15':40},
+            Mardi:{'08:00':42,'10:15':95,'14:00':78,'16:15':48},
+            Mercredi:{'08:00':30,'10:15':70,'14:00':78,'16:15':38},
+            Jeudi:{'08:00':36,'10:15':82,'14:00':68,'16:15':42},
+            Vendredi:{'08:00':72,'10:15':72,'14:00':50,'16:15':28},
+            Samedi:{'08:00':12,'10:15':18,'14:00':14,'16:15':8},
+        },
+        labCren:{'08:00':'08h-10h','10:15':'10h15-12h15','14:00':'14h-16h','16:15':'16h15-18h15'}
+    };
+    const modif = {
+        kpi:{ totalSeances:600, totalModifs:150, taux:25.0, typeMax:'Report de séance', moyParMois:15.0 },
+        parType:{'Report de séance':55,'Annulation':38,'Changement salle':32,'Changement horaire':25},
+        parMois:{Sep:8,Oct:12,Nov:18,Déc:22,Jan:14,Fév:16,Mar:20,Avr:18,Mai:14,Jun:8},
+        top5Motifs:[
+            {motif:'Indisponibilité enseignant',count:42},{motif:'Salle indisponible',count:35},
+            {motif:'Événement exceptionnel',count:28},{motif:'Demande étudiant',count:25},
+            {motif:'Conflit technique',count:20},
+        ]
+    };
+    const dispo = {
+        kpi:{ total:125, disponibles:106, indisponibles:19, tauxDisponibilite:84.8,
+              tauxIndisponibilite:15.2, batimentMin:'Bâtiment D' },
+        batimentData:[
+            {batiment:'Bâtiment A',dispo:28,indispo:2,total:30,taux:93.3},
+            {batiment:'Bâtiment B',dispo:32,indispo:3,total:35,taux:91.4},
+            {batiment:'Bâtiment C',dispo:26,indispo:4,total:30,taux:86.7},
+            {batiment:'Bâtiment D',dispo:20,indispo:10,total:30,taux:66.7},
+        ],
+        parType:{
+            Normale:{dispo:42,total:50},Informatique:{dispo:28,total:30},
+            Amphitheatre:{dispo:18,total:20},Laboratoire:{dispo:18,total:25},
+        }
+    };
+    const spc = {
+        kpi:{ totalClasses:12, totalSeances:600, moyGlobale:50.0,
+              classMax:'3A-INFO', maxSeances:72, classMin:'1A-LANG', minSeances:28 },
+        parClasse:[
+            {nom:'3A-INFO',filiere:'Informatique',nbSeances:72},
+            {nom:'3A-MATH',filiere:'Mathématiques',nbSeances:68},
+            {nom:'2A-INFO',filiere:'Informatique',nbSeances:62},
+            {nom:'2A-MATH',filiere:'Mathématiques',nbSeances:58},
+            {nom:'3A-PHY', filiere:'Physique',     nbSeances:55},
+            {nom:'1A-INFO',filiere:'Informatique', nbSeances:52},
+            {nom:'2A-PHY', filiere:'Physique',     nbSeances:50},
+            {nom:'1A-MATH',filiere:'Mathématiques',nbSeances:48},
+            {nom:'3A-GEST',filiere:'Management',   nbSeances:45},
+            {nom:'2A-GEST',filiere:'Management',   nbSeances:42},
+            {nom:'1A-GEST',filiere:'Management',   nbSeances:40},
+            {nom:'1A-LANG',filiere:'Langues',      nbSeances:28},
+        ],
+        parFiliere:[
+            {filiere:'Informatique',moy:62.0},{filiere:'Mathématiques',moy:58.0},
+            {filiere:'Physique',moy:52.5},{filiere:'Management',moy:42.3},{filiere:'Langues',moy:28.0},
+        ]
+    };
+    return [occ, vol, conf, cren, modif, dispo, spc];
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RENDER PRINCIPAL
+───────────────────────────────────────────────────────────── */
+function renderAll(occ, vol, conf, cren, modif, dispo, spc){
+    const lbl = src === 'live' ? '🟢 Live' : '📊 Faker';
+
+    // ── Bandeau 7 KPIs globaux ──
+    const kpiGlobal = `
+    <div class="kpi-global">
+      <div class="kpi-global-card c1">
+        <div class="kpi-global-icon">🏫</div>
+        <div class="kpi-global-val">${occ.kpi.tauxMoyen}%</div>
+        <div class="kpi-global-label">Taux occupation moyen</div>
+        <div class="kpi-global-sub">${occ.kpi.totalSalles} salles</div>
+      </div>
+      <div class="kpi-global-card c2">
+        <div class="kpi-global-icon">👨‍🏫</div>
+        <div class="kpi-global-val red">${vol.kpi.tauxSurcharge}%</div>
+        <div class="kpi-global-label">Enseignants surchargés</div>
+        <div class="kpi-global-sub">${vol.kpi.nbSurcharge}/${vol.kpi.totalEns}</div>
+      </div>
+      <div class="kpi-global-card c3">
+        <div class="kpi-global-icon">⚠️</div>
+        <div class="kpi-global-val orange">${conf.kpi.tauxNonResolution}%</div>
+        <div class="kpi-global-label">Conflits non résolus</div>
+        <div class="kpi-global-sub">${conf.kpi.nonResolus}/${conf.kpi.total}</div>
+      </div>
+      <div class="kpi-global-card c4">
+        <div class="kpi-global-icon">🕐</div>
+        <div class="kpi-global-val teal" style="font-size:1em">${cren.kpi.creneauMax}</div>
+        <div class="kpi-global-label">Créneau le + demandé</div>
+        <div class="kpi-global-sub">${cren.kpi.countMax} demandes</div>
+      </div>
+      <div class="kpi-global-card c5">
+        <div class="kpi-global-icon">✏️</div>
+        <div class="kpi-global-val purple">${modif.kpi.taux}%</div>
+        <div class="kpi-global-label">Taux modif. EDT</div>
+        <div class="kpi-global-sub">${modif.kpi.totalModifs} modifs</div>
+      </div>
+      <div class="kpi-global-card c6">
+        <div class="kpi-global-icon">✅</div>
+        <div class="kpi-global-val green">${dispo.kpi.tauxDisponibilite}%</div>
+        <div class="kpi-global-label">Salles disponibles</div>
+        <div class="kpi-global-sub">${dispo.kpi.disponibles}/${dispo.kpi.total}</div>
+      </div>
+      <div class="kpi-global-card c7">
+        <div class="kpi-global-icon">📚</div>
+        <div class="kpi-global-val brown">${spc.kpi.moyGlobale}</div>
+        <div class="kpi-global-label">Séances moy./classe</div>
+        <div class="kpi-global-sub">${spc.kpi.totalClasses} classes</div>
+      </div>
+    </div>`;
+
+    document.getElementById('main').innerHTML = kpiGlobal + `
+
+<!-- ══ AXE 1 ══ -->
+<div class="section-header">
+  <div class="section-icon icon-blue">🏫</div>
+  <div><div class="section-title">AXE 1 — Taux d'Occupation des Salles</div>
+       <div class="section-sub">Réservations approuvées dédupliquées / 640 créneaux × 100</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="kpi-row kpi-row-4">
+  <div class="kpi-card blue"><div class="kpi-icon">🏫</div><div><div class="kpi-val">${occ.kpi.totalSalles}</div><div class="kpi-label">Salles analysées</div></div></div>
+  <div class="kpi-card orange"><div class="kpi-icon">📊</div><div><div class="kpi-val">${occ.kpi.tauxMoyen}%</div><div class="kpi-label">Taux moyen</div></div></div>
+  <div class="kpi-card red"><div class="kpi-icon">🔥</div><div><div class="kpi-val">${occ.kpi.tauxMax}%</div><div class="kpi-label">Max · ${occ.kpi.salleMax}</div></div></div>
+  <div class="kpi-card purple"><div class="kpi-icon">⚠️</div><div><div class="kpi-val">${occ.kpi.surcharge}</div><div class="kpi-label">Salles en surcharge</div></div></div>
+</div>
+<div class="charts-3">
+  <div class="chart-card"><div class="chart-title">🏆 Top 10 Salles <span>${lbl}</span></div><div class="chart-wrap h300"><canvas id="cTop10"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🍩 Par Type <span>${lbl}</span></div><div class="chart-wrap h300"><canvas id="cDonut"></canvas></div></div>
+</div>
+
+<!-- ══ AXE 2 ══ -->
+<div class="section-header">
+  <div class="section-icon icon-red">👨‍🏫</div>
+  <div><div class="section-title">AXE 2 — Volume Horaire Enseignants</div>
+       <div class="section-sub">Seuil surcharge = Moyenne + 1σ (${vol.kpi.seuil}h)</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="kpi-row kpi-row-4">
+  <div class="kpi-card blue"><div class="kpi-icon">👨‍🏫</div><div><div class="kpi-val">${vol.kpi.totalEns}</div><div class="kpi-label">Enseignants</div></div></div>
+  <div class="kpi-card green"><div class="kpi-icon">⏱️</div><div><div class="kpi-val">${vol.kpi.moyVol}h</div><div class="kpi-label">Volume moyen</div></div></div>
+  <div class="kpi-card red"><div class="kpi-icon">🔴</div><div><div class="kpi-val">${vol.kpi.nbSurcharge}</div><div class="kpi-label">Surchargés (>${vol.kpi.seuil}h)</div></div></div>
+  <div class="kpi-card orange"><div class="kpi-icon">📈</div><div><div class="kpi-val">${vol.kpi.tauxSurcharge}%</div><div class="kpi-label">Taux surcharge</div></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">📊 Top 15 Enseignants <span>${lbl}</span></div><div class="chart-wrap h300"><canvas id="cTop15"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🏛️ Par Département <span>${lbl}</span></div><div class="chart-wrap h300"><canvas id="cDept"></canvas></div></div>
+</div>
+
+<!-- ══ AXE 3 ══ -->
+<div class="section-header">
+  <div class="section-icon icon-green">⚠️</div>
+  <div><div class="section-title">AXE 3 — Taux de Conflits</div>
+       <div class="section-sub">Conflits non résolus / Total conflits × 100</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="kpi-row kpi-row-3">
+  <div class="kpi-card blue"><div class="kpi-icon">⚡</div><div><div class="kpi-val">${conf.kpi.total}</div><div class="kpi-label">Total conflits</div></div></div>
+  <div class="kpi-card green"><div class="kpi-icon">✅</div><div><div class="kpi-val">${conf.kpi.tauxResolution}%</div><div class="kpi-label">Taux résolution</div></div></div>
+  <div class="kpi-card red"><div class="kpi-icon">❌</div><div><div class="kpi-val">${conf.kpi.tauxNonResolution}%</div><div class="kpi-label">Non résolus · Jour critique : ${conf.kpi.jourMax}</div></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">📊 Résolution par Type <span>${lbl}</span></div><div class="chart-wrap h260"><canvas id="cConfTypes"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🍩 Taux de Résolution <span>${lbl}</span></div><div class="chart-wrap h260"><canvas id="cReso"></canvas></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">📅 Par Jour <span>${lbl}</span></div><div class="chart-wrap h220"><canvas id="cJour"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🕐 Par Créneau <span>${lbl}</span></div><div class="chart-wrap h220"><canvas id="cCreneau"></canvas></div></div>
+</div>
+
+<!-- ══ AXE 4 ══ -->
+<div class="section-header">
+  <div class="section-icon icon-teal">🕐</div>
+  <div><div class="section-title">AXE 4 — Créneau le Plus Demandé</div>
+       <div class="section-sub">COUNT(demandes) GROUP BY Jour × Heure_Debut — ${cren.kpi.totalDemandes} demandes analysées</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="kpi-row kpi-row-4">
+  <div class="kpi-card teal"><div class="kpi-icon">🏆</div><div><div class="kpi-val" style="font-size:1em">${cren.kpi.creneauMax}</div><div class="kpi-label">Créneau le plus demandé</div></div></div>
+  <div class="kpi-card orange"><div class="kpi-icon">📊</div><div><div class="kpi-val">${cren.kpi.countMax}</div><div class="kpi-label">Demandes sur ce créneau</div></div></div>
+  <div class="kpi-card blue"><div class="kpi-icon">📅</div><div><div class="kpi-val">${cren.kpi.jourMax}</div><div class="kpi-label">Jour le plus chargé</div></div></div>
+  <div class="kpi-card green"><div class="kpi-icon">🥇</div><div><div class="kpi-val" style="font-size:.85em">${cren.kpi.top1Label}</div><div class="kpi-label">Combinaison #1</div></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">🔥 Heatmap Demandes — Jour × Créneau <span>${lbl}</span></div><div class="heatmap-wrap" id="heatmapWrap"></div></div>
+  <div class="chart-card"><div class="chart-title">🏆 Top 5 Combinaisons <span>${lbl}</span></div><div class="top5-list" id="top5List" style="margin-top:8px;"></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">📊 Par Créneau <span>${lbl}</span></div><div class="chart-wrap h180"><canvas id="cCrenDem"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">📅 Par Jour <span>${lbl}</span></div><div class="chart-wrap h180"><canvas id="cJourDem"></canvas></div></div>
+</div>
+
+<!-- ══ AXE 5 ══ -->
+<div class="section-header">
+  <div class="section-icon icon-purple">✏️</div>
+  <div><div class="section-title">AXE 5 — Taux de Modification de l'Emploi du Temps</div>
+       <div class="section-sub">Nb modifications / Nb séances EDT × 100</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="kpi-row kpi-row-4">
+  <div class="kpi-card blue"><div class="kpi-icon">📅</div><div><div class="kpi-val">${modif.kpi.totalSeances}</div><div class="kpi-label">Séances totales</div></div></div>
+  <div class="kpi-card purple"><div class="kpi-icon">✏️</div><div><div class="kpi-val">${modif.kpi.totalModifs}</div><div class="kpi-label">Modifications</div></div></div>
+  <div class="kpi-card orange"><div class="kpi-icon">📈</div><div><div class="kpi-val">${modif.kpi.taux}%</div><div class="kpi-label">Taux de modification</div></div></div>
+  <div class="kpi-card red"><div class="kpi-icon">🔁</div><div><div class="kpi-val" style="font-size:.85em">${modif.kpi.typeMax}</div><div class="kpi-label">Type dominant</div></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">📈 Évolution Mensuelle <span>${lbl}</span></div><div class="chart-wrap h220"><canvas id="cModifMois"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🍩 Par Type <span>${lbl}</span></div><div class="chart-wrap h220"><canvas id="cModifType"></canvas></div></div>
+</div>
+
+<!-- ══ AXE 6 ══ -->
+<div class="section-header">
+  <div class="section-icon icon-green">✅</div>
+  <div><div class="section-title">AXE 6 — Taux de Disponibilité des Salles</div>
+       <div class="section-sub">Salles disponibles (champ disponible = true) / Total salles × 100</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="kpi-row kpi-row-4">
+  <div class="kpi-card blue"><div class="kpi-icon">🏫</div><div><div class="kpi-val">${dispo.kpi.total}</div><div class="kpi-label">Total salles</div></div></div>
+  <div class="kpi-card green"><div class="kpi-icon">✅</div><div><div class="kpi-val">${dispo.kpi.disponibles}</div><div class="kpi-label">Salles disponibles</div></div></div>
+  <div class="kpi-card red"><div class="kpi-icon">🚫</div><div><div class="kpi-val">${dispo.kpi.indisponibles}</div><div class="kpi-label">Indisponibles</div></div></div>
+  <div class="kpi-card orange"><div class="kpi-icon">📊</div><div><div class="kpi-val">${dispo.kpi.tauxDisponibilite}%</div><div class="kpi-label">Taux disponibilité</div></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">📊 Disponibilité par Bâtiment <span>${lbl}</span></div><div class="chart-wrap h260"><canvas id="cDispoBat"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🍩 Disponible / Indisponible <span>${lbl}</span></div><div class="chart-wrap h260"><canvas id="cDispoDonut"></canvas></div></div>
+</div>
+
+<!-- ══ AXE 7 ══ -->
+<div class="section-header">
+  <div class="section-icon icon-brown">📚</div>
+  <div><div class="section-title">AXE 7 — Nombre Moyen de Séances par Classe</div>
+       <div class="section-sub">Total séances EDT / Nombre de classes — Classe max : ${spc.kpi.classMax} (${spc.kpi.maxSeances} séances)</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="kpi-row kpi-row-4">
+  <div class="kpi-card blue"><div class="kpi-icon">📚</div><div><div class="kpi-val">${spc.kpi.totalClasses}</div><div class="kpi-label">Classes analysées</div></div></div>
+  <div class="kpi-card brown"><div class="kpi-icon">📊</div><div><div class="kpi-val">${spc.kpi.moyGlobale}</div><div class="kpi-label">Séances moy./classe</div></div></div>
+  <div class="kpi-card green"><div class="kpi-icon">🏆</div><div><div class="kpi-val">${spc.kpi.maxSeances}</div><div class="kpi-label">Max · ${spc.kpi.classMax}</div></div></div>
+  <div class="kpi-card orange"><div class="kpi-icon">📉</div><div><div class="kpi-val">${spc.kpi.minSeances}</div><div class="kpi-label">Min · ${spc.kpi.classMin}</div></div></div>
+</div>
+<div class="charts-2">
+  <div class="chart-card"><div class="chart-title">📊 Séances par Classe <span>${lbl}</span></div><div class="chart-wrap h300"><canvas id="cSpcClasse"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">🏛️ Séances moy. par Filière <span>${lbl}</span></div><div class="chart-wrap h300"><canvas id="cSpcFiliere"></canvas></div></div>
+</div>
+
+<!-- ══ SYNTHÈSE ══ -->
+<div class="section-header">
+  <div class="section-icon icon-blue">📝</div>
+  <div><div class="section-title">Synthèse & Recommandations — 7 KPIs</div>
+       <div class="section-sub">Générée automatiquement</div></div>
+  <div class="section-divider"></div>
+</div>
+<div class="synthese-grid">
+  <div class="synthese-card s-blue"><h4>🏫 Occupation</h4>
+    <div class="synthese-item"><span>Taux moyen</span><span class="synthese-val">${occ.kpi.tauxMoyen}%</span></div>
+    <div class="synthese-item"><span>Max</span><span class="synthese-val">${occ.kpi.salleMax} (${occ.kpi.tauxMax}%)</span></div>
+    <div class="synthese-item"><span>En surcharge</span><span class="synthese-val">${occ.kpi.surcharge} salles</span></div>
+    <div class="synthese-item"><span>💡</span><span>Redistribuer les réservations</span></div>
+  </div>
+  <div class="synthese-card s-red"><h4>👨‍🏫 Volume horaire</h4>
+    <div class="synthese-item"><span>Moy.</span><span class="synthese-val">${vol.kpi.moyVol}h</span></div>
+    <div class="synthese-item"><span>Seuil</span><span class="synthese-val">${vol.kpi.seuil}h</span></div>
+    <div class="synthese-item"><span>Surchargés</span><span class="synthese-val">${vol.kpi.nbSurcharge} (${vol.kpi.tauxSurcharge}%)</span></div>
+    <div class="synthese-item"><span>💡</span><span>Rééquilibrer la charge</span></div>
+  </div>
+  <div class="synthese-card s-orange"><h4>⚠️ Conflits</h4>
+    <div class="synthese-item"><span>Total</span><span class="synthese-val">${conf.kpi.total}</span></div>
+    <div class="synthese-item"><span>Résolution</span><span class="synthese-val">${conf.kpi.tauxResolution}%</span></div>
+    <div class="synthese-item"><span>Jour critique</span><span class="synthese-val">${conf.kpi.jourMax}</span></div>
+    <div class="synthese-item"><span>💡</span><span>Renforcer le ${conf.kpi.jourMax}</span></div>
+  </div>
+  <div class="synthese-card s-teal"><h4>🕐 Créneaux</h4>
+    <div class="synthese-item"><span>Créneau max</span><span class="synthese-val">${cren.kpi.creneauMax}</span></div>
+    <div class="synthese-item"><span>Jour max</span><span class="synthese-val">${cren.kpi.jourMax}</span></div>
+    <div class="synthese-item"><span>Top combo</span><span class="synthese-val">${cren.kpi.top1Label}</span></div>
+    <div class="synthese-item"><span>💡</span><span>Prévoir + salles ce créneau</span></div>
+  </div>
+</div>
+<div class="synthese-grid-3" style="margin-top:14px;">
+  <div class="synthese-card s-purple"><h4>✏️ Modifications EDT</h4>
+    <div class="synthese-item"><span>Taux</span><span class="synthese-val">${modif.kpi.taux}%</span></div>
+    <div class="synthese-item"><span>Total modifs</span><span class="synthese-val">${modif.kpi.totalModifs}</span></div>
+    <div class="synthese-item"><span>Type dominant</span><span class="synthese-val">${modif.kpi.typeMax}</span></div>
+    <div class="synthese-item"><span>💡</span><span>Réduire les reports de séance</span></div>
+  </div>
+  <div class="synthese-card s-green"><h4>✅ Disponibilité</h4>
+    <div class="synthese-item"><span>Taux dispo.</span><span class="synthese-val">${dispo.kpi.tauxDisponibilite}%</span></div>
+    <div class="synthese-item"><span>Indisponibles</span><span class="synthese-val">${dispo.kpi.indisponibles} salles</span></div>
+    <div class="synthese-item"><span>Bât. critique</span><span class="synthese-val">${dispo.kpi.batimentMin}</span></div>
+    <div class="synthese-item"><span>💡</span><span>Remettre en état ${dispo.kpi.batimentMin}</span></div>
+  </div>
+  <div class="synthese-card s-brown"><h4>📚 Séances/classe</h4>
+    <div class="synthese-item"><span>Moy. globale</span><span class="synthese-val">${spc.kpi.moyGlobale} séances</span></div>
+    <div class="synthese-item"><span>Classe max</span><span class="synthese-val">${spc.kpi.classMax} (${spc.kpi.maxSeances})</span></div>
+    <div class="synthese-item"><span>Classe min</span><span class="synthese-val">${spc.kpi.classMin} (${spc.kpi.minSeances})</span></div>
+    <div class="synthese-item"><span>💡</span><span>Équilibrer la charge entre classes</span></div>
+  </div>
+</div>
+<div style="height:40px;"></div>`;
+
+    requestAnimationFrame(() => drawAll(occ, vol, conf, cren, modif, dispo, spc));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DRAW CHARTS
+───────────────────────────────────────────────────────────── */
+function drawAll(occ, vol, conf, cren, modif, dispo, spc){
+    const moy = occ.kpi.tauxMoyen, seuil = vol.kpi.seuil;
+    const labCren = cren.labCren || {'08:00':'08h-10h','10:15':'10h15-12h15','14:00':'14h-16h','16:15':'16h15-18h15'};
+
+    // AXE 1
+    cx.t10 = new Chart(document.getElementById('cTop10'),{type:'bar',data:{
+        labels:occ.top10.map(s=>s.nom),
+        datasets:[{data:occ.top10.map(s=>s.taux),borderRadius:5,
+            backgroundColor:occ.top10.map(s=>s.taux>=moy*1.3?C.red:s.taux>=moy?C.orange:C.blue)}]
+    },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}%`}}},
+        scales:{x:{ticks:{callback:v=>v+'%'}},y:{ticks:{font:{size:11}}}}}});
+
+    cx.don = new Chart(document.getElementById('cDonut'),{type:'doughnut',data:{
+        labels:Object.keys(occ.parType),
+        datasets:[{data:Object.values(occ.parType),backgroundColor:C.multi,borderWidth:3,borderColor:'#fff'}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+        plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10}}}}});
+
+    // AXE 2
+    cx.t15 = new Chart(document.getElementById('cTop15'),{type:'bar',data:{
+        labels:vol.top15.map(e=>e.nom),
+        datasets:[{data:vol.top15.map(e=>e.vol),borderRadius:4,
+            backgroundColor:vol.top15.map(e=>e.surcharge?C.red:C.blue)}]
+    },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}h${c.raw>seuil?' ⚠️':''}`}}},
+        scales:{x:{ticks:{callback:v=>v+'h'}},y:{ticks:{font:{size:10}}}}}});
+
+    cx.dep = new Chart(document.getElementById('cDept'),{type:'bar',data:{
+        labels:vol.parDept.map(d=>d.dept),
+        datasets:[{data:vol.parDept.map(d=>d.moy),backgroundColor:C.multi,borderRadius:5}]
+    },options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}h`}}},
+        scales:{x:{ticks:{font:{size:10},maxRotation:25}},y:{ticks:{callback:v=>v+'h'}}}}});
+
+    // AXE 3
+    const cTypes = Object.keys(conf.resParType);
+    cx.ct = new Chart(document.getElementById('cConfTypes'),{type:'bar',data:{
+        labels:cTypes.map(t=>t.length>20?t.substring(0,20)+'…':t),
+        datasets:[
+            {label:'Résolus',data:cTypes.map(t=>conf.resParType[t].r||0),backgroundColor:C.green,borderRadius:4},
+            {label:'Non résolus',data:cTypes.map(t=>conf.resParType[t].nr||0),backgroundColor:C.red,borderRadius:4},
+        ]
+    },options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{x:{ticks:{font:{size:10}}},y:{beginAtZero:true}}}});
+
+    cx.res = new Chart(document.getElementById('cReso'),{type:'doughnut',data:{
+        labels:['Résolus','Non résolus'],
+        datasets:[{data:[conf.kpi.resolus,conf.kpi.nonResolus],
+            backgroundColor:[C.green,C.red],borderWidth:3,borderColor:'#fff'}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+        plugins:{legend:{position:'bottom',labels:{font:{size:12},padding:12}}}}});
+
+    cx.jou = new Chart(document.getElementById('cJour'),{type:'bar',data:{
+        labels:Object.keys(conf.parJour),
+        datasets:[{data:Object.values(conf.parJour),borderRadius:5,
+            backgroundColor:Object.values(conf.parJour).map((v,i,a)=>v===Math.max(...a)?C.red:C.blue)}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+    cx.cre = new Chart(document.getElementById('cCreneau'),{type:'bar',data:{
+        labels:Object.keys(conf.parCreneau).map(k=>labCren[k]||k),
+        datasets:[{data:Object.values(conf.parCreneau),backgroundColor:[C.blue,C.orange,C.red,C.purple],borderRadius:5}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+    // AXE 4 — Heatmap
+    const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    const crens = ['08:00','10:15','14:00','16:15'];
+    const hm    = cren.heatmap || {};
+    let maxHm   = 0;
+    jours.forEach(j=>crens.forEach(c=>{ if((hm[j]?.[c]||0)>maxHm) maxHm=hm[j][c]; }));
+    function hmCol(v){
+        const p=maxHm?v/maxHm:0;
+        if(p>.8) return {bg:'#c1002a',txt:'white'};
+        if(p>.6) return {bg:'#e65100',txt:'white'};
+        if(p>.4) return {bg:'#ff8f00',txt:'white'};
+        if(p>.2) return {bg:'#fff9c4',txt:'#333'};
+        if(p>.05)return {bg:'#e8f5e9',txt:'#333'};
+        return {bg:'#f5f5f5',txt:'#bbb'};
+    }
+    let hmHtml='<table class="heatmap-table"><thead><tr><th>Créneau</th>';
+    jours.forEach(j=>hmHtml+=`<th>${j}</th>`);
+    hmHtml+='</tr></thead><tbody>';
+    crens.forEach(c=>{
+        hmHtml+=`<tr><td class="heatmap-row-label">${labCren[c]||c}</td>`;
+        jours.forEach(j=>{
+            const v=hm[j]?.[c]||0,col=hmCol(v);
+            hmHtml+=`<td style="background:${col.bg};color:${col.txt}" title="${j} ${labCren[c]||c}: ${v}">${v}</td>`;
+        });
+        hmHtml+='</tr>';
+    });
+    document.getElementById('heatmapWrap').innerHTML=hmHtml+'</tbody></table>';
+
+    const top5=cren.top5||[], maxC=top5[0]?.count||1;
+    document.getElementById('top5List').innerHTML=top5.map((it,i)=>`
+        <div class="top5-item">
+            <div class="top5-rank ${i===0?'gold':''}">${i+1}</div>
+            <div class="top5-bar-wrap">
+                <div class="top5-label">${it.label}</div>
+                <div class="top5-bar-bg"><div class="top5-bar-fill" style="width:${Math.round(it.count/maxC*100)}%;background:${i===0?C.orange:C.blue}"></div></div>
+            </div>
+            <div class="top5-count">${it.count}</div>
+        </div>`).join('');
+
+    cx.crenDem=new Chart(document.getElementById('cCrenDem'),{type:'bar',data:{
+        labels:Object.keys(cren.parCreneau).map(k=>labCren[k]||k),
+        datasets:[{data:Object.values(cren.parCreneau),
+            backgroundColor:Object.values(cren.parCreneau).map((v,i,a)=>v===Math.max(...a)?C.teal:C.blue),borderRadius:6}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+    cx.jourDem=new Chart(document.getElementById('cJourDem'),{type:'bar',data:{
+        labels:Object.keys(cren.parJour),
+        datasets:[{data:Object.values(cren.parJour),
+            backgroundColor:Object.values(cren.parJour).map((v,i,a)=>v===Math.max(...a)?C.teal:C.blue),borderRadius:6}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+    // AXE 5
+    cx.modifMois=new Chart(document.getElementById('cModifMois'),{type:'line',data:{
+        labels:Object.keys(modif.parMois),
+        datasets:[{label:'Modifications',data:Object.values(modif.parMois),
+            borderColor:C.purple,backgroundColor:C.purple+'22',fill:true,tension:.4,
+            pointRadius:5,pointBackgroundColor:C.purple,borderWidth:2}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+    cx.modifType=new Chart(document.getElementById('cModifType'),{type:'doughnut',data:{
+        labels:Object.keys(modif.parType),
+        datasets:[{data:Object.values(modif.parType),backgroundColor:C.multi,borderWidth:3,borderColor:'#fff'}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+        plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:8}}}}});
+
+    // AXE 6 — Disponibilité
+    cx.dispoBat=new Chart(document.getElementById('cDispoBat'),{type:'bar',data:{
+        labels:dispo.batimentData.map(b=>b.batiment),
+        datasets:[
+            {label:'Disponibles',  data:dispo.batimentData.map(b=>b.dispo),  backgroundColor:C.green,borderRadius:5},
+            {label:'Indisponibles',data:dispo.batimentData.map(b=>b.indispo),backgroundColor:C.red,  borderRadius:5},
+        ]
+    },options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{x:{stacked:true,ticks:{font:{size:11}}},y:{stacked:true,beginAtZero:true}}}});
+
+    cx.dispoDonut=new Chart(document.getElementById('cDispoDonut'),{type:'doughnut',data:{
+        labels:['Disponibles','Indisponibles'],
+        datasets:[{data:[dispo.kpi.disponibles,dispo.kpi.indisponibles],
+            backgroundColor:[C.green,C.red],borderWidth:3,borderColor:'#fff'}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+        plugins:{legend:{position:'bottom',labels:{font:{size:12},padding:12}}}}});
+
+    // AXE 7 — Séances par classe
+    const spcMoy = spc.kpi.moyGlobale;
+    cx.spcClasse=new Chart(document.getElementById('cSpcClasse'),{type:'bar',data:{
+        labels:spc.parClasse.map(c=>c.nom),
+        datasets:[{data:spc.parClasse.map(c=>c.nbSeances),borderRadius:5,
+            backgroundColor:spc.parClasse.map(c=>c.nbSeances>spcMoy*1.2?C.brown:c.nbSeances<spcMoy*0.8?C.orange:C.blue)}]
+    },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} séances`}}},
+        scales:{x:{beginAtZero:true},y:{ticks:{font:{size:10}}}}}});
+
+    cx.spcFiliere=new Chart(document.getElementById('cSpcFiliere'),{type:'bar',data:{
+        labels:spc.parFiliere.map(f=>f.filiere),
+        datasets:[{data:spc.parFiliere.map(f=>f.moy),backgroundColor:C.multi,borderRadius:6}]
+    },options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} séances moy.`}}},
+        scales:{x:{ticks:{font:{size:10},maxRotation:25}},y:{beginAtZero:true}}}});
+}
+
+loadAll();
+</script>
+</body>
+</html>

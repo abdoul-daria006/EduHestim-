@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réserver une Salle - EduHestim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #003d82 0%, #002a5c 100%); color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 45px; height: 45px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .logout-section { padding: 20px; border-top: 2px solid rgba(255,255,255,0.1); }
+        .btn-logout { width: 100%; padding: 12px; background: #c1002a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .page-title { font-size: 1.8em; color: #003d82; font-weight: 700; }
+        .content-area { padding: 30px 35px; overflow-y: auto; }
+        .reservation-container { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+        .form-section { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .form-header { margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0; }
+        .form-header h2 { color: #003d82; font-size: 1.3em; font-weight: 700; margin-bottom: 5px; }
+        .form-header p { color: #888; font-size: 0.9em; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #003d82; font-weight: 600; font-size: 0.9em; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95em; font-family: inherit; transition: border-color 0.2s; background: #fafafa; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #003d82; background: white; }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, #003d82, #002a5c); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1em; margin-top: 10px; transition: all 0.3s; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,61,130,0.3); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .salles-panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: fit-content; position: sticky; top: 20px; }
+        .salles-panel h3 { color: #003d82; font-size: 1.1em; font-weight: 700; margin-bottom: 5px; }
+        .salles-panel p { color: #888; font-size: 0.82em; margin-bottom: 18px; }
+        .salle-item { padding: 13px 15px; background: #f8f9fa; margin-bottom: 10px; border-left: 3px solid #003d82; cursor: pointer; transition: all 0.2s; border-radius: 6px; }
+        .salle-item:hover { background: #e3f2fd; transform: translateX(3px); }
+        .salle-item.selected { background: #003d82; color: white; border-left-color: #c1002a; }
+        .salle-nom { font-weight: 600; margin-bottom: 4px; font-size: 0.95em; }
+        .salle-details { font-size: 0.82em; opacity: 0.75; }
+        .type-badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 0.75em; font-weight: 600; margin-top: 5px; }
+        .badge-normale { background: #e3f2fd; color: #1565c0; }
+        .badge-info    { background: #fff3e0; color: #e65100; }
+        .badge-amphi   { background: #f3e5f5; color: #7b1fa2; }
+        .badge-labo    { background: #e8f5e9; color: #2e7d32; }
+        .alert { padding: 14px 16px; border-radius: 8px; margin-bottom: 20px; display: none; font-size: 0.95em; }
+        .alert.show { display: block; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .alert-error   { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
+        @media (max-width: 1024px) { .reservation-container { grid-template-columns: 1fr; } .salles-panel { position: static; } .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-section">
+            <div class="logo-img">📚</div>
+            <div class="logo-text">EduHestim</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" onclick="navigateTo('Enseignantdash.html')">📊 Dashboard</div>
+            <div class="nav-item" onclick="navigateTo('EmploiedutempsEnseignant.html')">📅 Emploi du Temps</div>
+            <div class="nav-item active">📋 Faire une Demande</div>
+            <div class="nav-item" onclick="navigateTo('MesreservationsEnseignant.html')">📝 Mes Réservations</div>
+            <div class="nav-item" onclick="navigateTo('NotifEnseignant.html')">🔔 Notifications</div>
+            <div class="nav-item" onclick="navigateTo('ProfilEnseignant.html')">👤 Mon Profil</div>
+        </div>
+        <div class="logout-section">
+            <!-- ✅ FIX déconnexion -->
+            <button class="btn-logout" onclick="authSystem.logout()">🚪 Déconnexion</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">📋 Réserver une Salle</h1>
+        </div>
+        <div class="content-area">
+            <div id="alertSuccess" class="alert alert-success"></div>
+            <div id="alertError"   class="alert alert-error"></div>
+
+            <div class="reservation-container">
+                <div class="form-section">
+                    <div class="form-header">
+                        <h2>Demande de Réservation</h2>
+                        <p>Remplissez le formulaire pour réserver une salle</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type de Demande *</label>
+                        <select id="typeDemande" required>
+                            <option value="">-- Sélectionnez le type --</option>
+                            <option value="Changement de salle">Changement de salle</option>
+                            <option value="Nouvelle réservation">Nouvelle réservation</option>
+                            <option value="Séance de rattrapage">Séance de rattrapage</option>
+                            <option value="Réunion pédagogique">Réunion pédagogique</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Salle *</label>
+                        <!-- ✅ FIX : le select démarre vide, rempli par loadSalles() -->
+                        <select id="salle" required>
+                            <option value="">⏳ Chargement des salles...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date de Réservation *</label>
+                        <input type="date" id="dateReservation" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Heure de Début *</label>
+                            <input type="time" id="heureDebut" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Heure de Fin *</label>
+                            <input type="time" id="heureFin" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Motif *</label>
+                        <textarea id="motif" required placeholder="Ex: Cours de rattrapage, réunion pédagogique..."></textarea>
+                    </div>
+
+                    <button class="btn-submit" id="btnSubmit" onclick="submitDemande()">
+                        📤 Soumettre la Demande
+                    </button>
+                </div>
+
+                <!-- Panel salles -->
+                <div class="salles-panel">
+                    <h3>🏫 Salles Disponibles</h3>
+                    <p>Cliquez pour sélectionner une salle</p>
+                    <div id="sallesList">⏳ Chargement...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        // ✅ FIX: requireAuth via authSystem
+        const currentUser = authSystem.requireAuth('enseignant');
+
+        function navigateTo(page) { window.location.href = page; }
+
+        // Date minimum = aujourd'hui
+        document.getElementById('dateReservation').min = new Date().toISOString().split('T')[0];
+
+        // ✅ FIX: loadSalles charge toutes les salles disponibles via l'API
+        async function loadSalles() {
+            const select    = document.getElementById('salle');
+            const listEl    = document.getElementById('sallesList');
+
+            try {
+                // ✅ Appel API correct - getSallesDisponibles filtre disponible=true
+                const salles = await dataManager.getSallesDisponibles();
+
+                if (salles.length === 0) {
+                    select.innerHTML = '<option value="">Aucune salle disponible</option>';
+                    listEl.innerHTML = '<p style="color:#888;font-size:0.9em;text-align:center;">Aucune salle disponible.</p>';
+                    return;
+                }
+
+                // Remplir le <select>
+                select.innerHTML = '<option value="">-- Sélectionnez une salle --</option>';
+                salles.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value            = s._id;
+                    opt.dataset.nom      = s.nom;
+                    opt.dataset.batiment = s.batiment || '';
+                    opt.textContent      = `${s.nom} — ${s.type} (${s.capacite} places)`;
+                    select.appendChild(opt);
+                });
+
+                // Remplir le panel
+                const badgeMap = {
+                    'Informatique': 'badge-info',
+                    'Amphithéâtre': 'badge-amphi',
+                    'Laboratoire':  'badge-labo'
+                };
+                listEl.innerHTML = salles.map(s => `
+                    <div class="salle-item" onclick="selectSalle('${s._id}', this)">
+                        <div class="salle-nom">${s.nom}</div>
+                        <div class="salle-details">${s.capacite} places · ${s.batiment || ''}</div>
+                        <span class="type-badge ${badgeMap[s.type] || 'badge-normale'}">${s.type}</span>
+                    </div>`).join('');
+
+                // Sync : clic sur panel → met à jour le select
+                document.getElementById('salle').addEventListener('change', function() {
+                    const val = this.value;
+                    document.querySelectorAll('.salle-item').forEach((el, i) => {
+                        el.classList.toggle('selected', salles[i] && salles[i]._id === val);
+                    });
+                });
+
+            } catch(err) {
+                select.innerHTML = '<option value="">❌ Erreur chargement</option>';
+                listEl.innerHTML = `<p style="color:#c62828;font-size:0.9em;">❌ ${err.message}</p>`;
+            }
+        }
+
+        function selectSalle(id, el) {
+            document.querySelectorAll('.salle-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('salle').value = id;
+        }
+
+        async function submitDemande() {
+            const typeDemande = document.getElementById('typeDemande').value;
+            const salleSelect = document.getElementById('salle');
+            const date        = document.getElementById('dateReservation').value;
+            const heureDebut  = document.getElementById('heureDebut').value;
+            const heureFin    = document.getElementById('heureFin').value;
+            const motif       = document.getElementById('motif').value.trim();
+
+            // Validations
+            if (!typeDemande)          { showAlert('error', 'Veuillez sélectionner le type de demande.'); return; }
+            if (!salleSelect.value)    { showAlert('error', 'Veuillez sélectionner une salle.'); return; }
+            if (!date)                 { showAlert('error', 'Veuillez choisir une date.'); return; }
+            if (!heureDebut || !heureFin) { showAlert('error', 'Veuillez renseigner les heures.'); return; }
+            if (heureDebut >= heureFin) { showAlert('error', "L'heure de fin doit être après l'heure de début."); return; }
+            if (!motif)                { showAlert('error', 'Veuillez préciser le motif.'); return; }
+
+            const selectedOpt = salleSelect.options[salleSelect.selectedIndex];
+            const salleNom    = selectedOpt.dataset.nom || selectedOpt.text.split(' —')[0];
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled    = true;
+            btn.textContent = '⏳ Envoi en cours...';
+
+            try {
+                await dataManager.addDemande({
+                    userId:   currentUser.id,
+                    userName: `${currentUser.prenom} ${currentUser.nom}`,
+                    userRole: 'enseignant',
+                    salle:    salleNom,
+                    date,
+                    heureDebut,
+                    heureFin,
+                    motif:    `[${typeDemande}] ${motif}`
+                });
+
+                showAlert('success', `✅ Demande envoyée ! Salle : ${salleNom} le ${date} de ${heureDebut} à ${heureFin}`);
+
+                // Reset
+                document.getElementById('typeDemande').value    = '';
+                salleSelect.value                               = '';
+                document.getElementById('dateReservation').value = '';
+                document.getElementById('heureDebut').value      = '';
+                document.getElementById('heureFin').value        = '';
+                document.getElementById('motif').value           = '';
+                document.querySelectorAll('.salle-item').forEach(i => i.classList.remove('selected'));
+
+                // Redirection après 3s
+                setTimeout(() => navigateTo('MesreservationsEnseignant.html'), 3000);
+
+            } catch(err) {
+                showAlert('error', '❌ Erreur : ' + err.message);
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = '📤 Soumettre la Demande';
+            }
+        }
+
+        function showAlert(type, msg) {
+            const el    = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            const other = document.getElementById(type === 'success' ? 'alertError' : 'alertSuccess');
+            other.classList.remove('show');
+            el.textContent = msg;
+            el.classList.add('show');
+            if (type === 'error') setTimeout(() => el.classList.remove('show'), 6000);
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        loadSalles();
+    </script>
+</body>
+</html>

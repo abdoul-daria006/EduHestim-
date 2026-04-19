@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Emploi du Temps - EduHestim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #003d82 0%, #002a5c 100%); color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 45px; height: 45px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .logout-section { padding: 20px; border-top: 2px solid rgba(255,255,255,0.1); }
+        .btn-logout { width: 100%; padding: 12px; background: #c1002a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 1.8em; color: #003d82; font-weight: 700; }
+        .stat-pills { display: flex; gap: 10px; }
+        .pill { padding: 7px 16px; border-radius: 20px; font-size: 0.85em; font-weight: 700; }
+        .pill.blue   { background: #e3f2fd; color: #003d82; }
+        .pill.red    { background: #ffebee; color: #c62828; }
+        .pill.green  { background: #e8f5e9; color: #2e7d32; }
+        .content-area { padding: 25px 35px; overflow-y: auto; }
+        .calendar-wrapper { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow-x: auto; }
+        .calendar-grid { display: grid; grid-template-columns: 110px repeat(5, 1fr); min-width: 850px; }
+        .cal-header { background: #003d82; color: white; padding: 14px 10px; font-weight: 700; text-align: center; font-size: 0.9em; }
+        .cal-header.day { background: #002a5c; }
+        .time-label { background: #f8f9fa; padding: 0 10px; text-align: center; font-weight: 700; color: #003d82; border-right: 2px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; font-size: 0.82em; display: flex; align-items: center; justify-content: center; min-height: 90px; line-height: 1.4; }
+        .cal-cell { border: 1px solid #eee; min-height: 90px; padding: 6px; }
+        .course-block { padding: 10px 12px; border-radius: 8px; color: white; font-size: 0.82em; cursor: pointer; transition: all 0.2s; height: 100%; box-sizing: border-box; }
+        .course-block:hover { transform: scale(1.02); box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+        .course-block.CM { background: linear-gradient(135deg, #c1002a, #e53935); }
+        .course-block.TD { background: linear-gradient(135deg, #003d82, #005cb2); }
+        .course-block.TP { background: linear-gradient(135deg, #2e7d32, #43a047); }
+        .c-name { font-weight: 700; margin-bottom: 5px; line-height: 1.3; }
+        .c-info { opacity: 0.88; font-size: 0.9em; line-height: 1.4; }
+        .legend { background: white; padding: 18px 22px; margin-top: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 25px; flex-wrap: wrap; }
+        .legend span { font-weight: 700; color: #003d82; margin-right: 5px; }
+        .leg-item { display: flex; align-items: center; gap: 8px; font-size: 0.9em; color: #555; }
+        .leg-dot { width: 16px; height: 16px; border-radius: 4px; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 14px; padding: 30px; width: 420px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal h3 { color: #003d82; font-size: 1.2em; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #f0f0f0; }
+        .modal-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .modal-label { color: #888; font-size: 0.85em; width: 110px; flex-shrink: 0; padding-top: 2px; }
+        .modal-value { color: #222; font-weight: 600; font-size: 0.95em; }
+        .modal-close { margin-top: 20px; width: 100%; padding: 12px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .empty-cell { color: #eee; text-align: center; font-size: 1.5em; padding-top: 25px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-section">
+            <div class="logo-img">📚</div>
+            <div class="logo-text">EduHestim</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" onclick="navigateTo('Enseignantdash.html')">📊 Dashboard</div>
+            <div class="nav-item active">📅 Emploi du Temps</div>
+            <div class="nav-item" onclick="navigateTo('FairedesdemandesEnseignant.html')">📋 Faire une Demande</div>
+            <div class="nav-item" onclick="navigateTo('MesreservationsEnseignant.html')">🏫 Mes Réservations</div>
+            <div class="nav-item" onclick="navigateTo('NotifEnseignant.html')">🔔 Notifications</div>
+            <div class="nav-item" onclick="navigateTo('ProfilEnseignant.html')">👤 Mon Profil</div>
+        </div>
+        <div class="logout-section">
+            <button class="btn-logout" onclick="authSystem.logout()">🚪 Déconnexion</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">📅 Mon Emploi du Temps</h1>
+            <div class="stat-pills">
+                <div class="pill blue" id="pillTotal">— cours</div>
+                <div class="pill red"  id="pillCM">— CM</div>
+                <div class="pill blue" id="pillTD">— TD</div>
+                <div class="pill green" id="pillTP">— TP</div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="calendar-wrapper">
+                <div id="calendarGrid" class="calendar-grid">
+                    <div style="grid-column:1/-1;padding:50px;text-align:center;color:#aaa;">⏳ Chargement...</div>
+                </div>
+            </div>
+            <div class="legend">
+                <span>Légende :</span>
+                <div class="leg-item"><div class="leg-dot" style="background:#c1002a;"></div> Cours Magistral (CM)</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#003d82;"></div> Travaux Dirigés (TD)</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#2e7d32;"></div> Travaux Pratiques (TP)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal">
+            <h3>📚 Détail du cours</h3>
+            <div id="modalContent"></div>
+            <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('show')">Fermer</button>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        // ✅ FIX: authSystem.requireAuth
+        const currentUser = authSystem.requireAuth('enseignant');
+        function navigateTo(page) { window.location.href = page; }
+
+        const JOURS    = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+        const CRENEAUX = [
+            { debut: '08:00', label: '08h00<br>10h00' },
+            { debut: '10:15', label: '10h15<br>12h15' },
+            { debut: '14:00', label: '14h00<br>16h00' },
+            { debut: '16:15', label: '16h15<br>18h15' },
+        ];
+
+        function showDetail(c) {
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-row"><span class="modal-label">Matière</span><span class="modal-value">📖 ${c.matiere}</span></div>
+                <div class="modal-row"><span class="modal-label">Type</span><span class="modal-value">${c.type}</span></div>
+                <div class="modal-row"><span class="modal-label">Classe</span><span class="modal-value">👥 ${c.classeCode}</span></div>
+                <div class="modal-row"><span class="modal-label">Salle</span><span class="modal-value">🏫 ${c.salle}</span></div>
+                <div class="modal-row"><span class="modal-label">Jour</span><span class="modal-value">📅 ${c.jour}</span></div>
+                <div class="modal-row"><span class="modal-label">Horaire</span><span class="modal-value">🕐 ${c.heureDebut} – ${c.heureFin}</span></div>
+            `;
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function closeModal(e) {
+            if (e.target === document.getElementById('modalOverlay'))
+                document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        async function loadEmploiDuTemps() {
+            const grid = document.getElementById('calendarGrid');
+            try {
+                const tousLesCours = await dataManager.getEmploisDuTemps();
+
+                // ✅ FIX: filtre par enseignantId (comparaison string)
+                const mesCours = tousLesCours.filter(c => {
+                    const eid = c.enseignantId?._id || c.enseignantId;
+                    return eid === currentUser.id;
+                });
+
+                // Pills stats
+                document.getElementById('pillTotal').textContent = `${mesCours.length} cours`;
+                document.getElementById('pillCM').textContent    = `${mesCours.filter(c => c.type === 'CM').length} CM`;
+                document.getElementById('pillTD').textContent    = `${mesCours.filter(c => c.type === 'TD').length} TD`;
+                document.getElementById('pillTP').textContent    = `${mesCours.filter(c => c.type === 'TP').length} TP`;
+
+                let html = `<div class="cal-header">Horaires</div>`;
+                JOURS.forEach(j => { html += `<div class="cal-header day">${j}</div>`; });
+
+                CRENEAUX.forEach(({ debut, label }) => {
+                    html += `<div class="time-label">${label}</div>`;
+                    JOURS.forEach(jour => {
+                        const c = mesCours.find(x => x.jour === jour && x.heureDebut === debut);
+                        if (c) {
+                            html += `<div class="cal-cell">
+                                <div class="course-block ${c.type || 'CM'}" onclick='showDetail(${JSON.stringify(c)})'>
+                                    <div class="c-name">${c.matiere} <span style="opacity:.7;font-size:.85em;">(${c.type})</span></div>
+                                    <div class="c-info">👥 ${c.classeCode}<br>🏫 ${c.salle}</div>
+                                </div>
+                            </div>`;
+                        } else {
+                            html += `<div class="cal-cell"><div class="empty-cell">·</div></div>`;
+                        }
+                    });
+                });
+
+                grid.innerHTML = html;
+
+                if (mesCours.length === 0) {
+                    grid.innerHTML = `<div style="grid-column:1/-1;padding:50px;text-align:center;color:#aaa;">📭 Aucun cours planifié pour le moment.</div>`;
+                }
+            } catch(err) {
+                console.error(err);
+                grid.innerHTML = `<div style="grid-column:1/-1;padding:50px;text-align:center;color:#c62828;">❌ Erreur : ${err.message}</div>`;
+            }
+        }
+
+        loadEmploiDuTemps();
+    </script>
+</body>
+</html>

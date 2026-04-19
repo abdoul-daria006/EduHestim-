@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Salles - EduHestim</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #003d82 0%, #002a5c 100%); color: white; position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .logo-section { padding: 25px 20px; border-bottom: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 45px; height: 45px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; }
+        .logo-text { font-size: 1.4em; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 20px 0; }
+        .nav-item { padding: 14px 20px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.3s; font-size: 0.95em; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #c1002a; color: white; }
+        .logout-section { padding: 20px; border-top: 2px solid rgba(255,255,255,0.1); }
+        .btn-logout { width: 100%; padding: 12px; background: #c1002a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 20px 35px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 1.8em; color: #003d82; font-weight: 700; }
+        .btn-add { padding: 12px 24px; background: #003d82; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all 0.2s; }
+        .btn-add:hover { background: #002a5c; }
+        .content-area { padding: 30px 35px; overflow-y: auto; }
+        .stats-bar { display: flex; gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px 20px; border-radius: 10px; text-align: center; flex: 1; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .stat-num { font-size: 2em; font-weight: 700; color: #003d82; }
+        .stat-label { font-size: 0.82em; color: #666; margin-top: 4px; }
+        .salles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .salle-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s; border-left: 4px solid #003d82; }
+        .salle-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+        .salle-card.type-info { border-left-color: #2196f3; }
+        .salle-card.type-amphi { border-left-color: #9c27b0; }
+        .salle-card.type-labo { border-left-color: #ff9800; }
+        .salle-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .salle-title { font-size: 1.15em; color: #003d82; font-weight: 700; }
+        .type-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.78em; font-weight: 600; }
+        .badge-normale { background: #e3f2fd; color: #1565c0; }
+        .badge-info { background: #e8f5e9; color: #2e7d32; }
+        .badge-amphi { background: #f3e5f5; color: #7b1fa2; }
+        .badge-labo { background: #fff3e0; color: #e65100; }
+        .salle-info { margin: 8px 0; color: #555; display: flex; align-items: center; gap: 8px; font-size: 0.92em; }
+        .salle-equip { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .equip-tag { background: #f0f4ff; color: #003d82; padding: 3px 8px; border-radius: 10px; font-size: 0.78em; }
+        .salle-actions { display: flex; gap: 8px; margin-top: 18px; }
+        .btn { padding: 9px 16px; border: none; border-radius: 7px; cursor: pointer; font-weight: 600; flex: 1; transition: all 0.2s; font-size: 0.88em; }
+        .btn-edit   { background: #2196f3; color: white; }
+        .btn-delete { background: #c62828; color: white; }
+        .btn-edit:hover   { background: #1565c0; }
+        .btn-delete:hover { background: #b71c1c; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 14px; max-width: 520px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 1.3em; color: #003d82; margin-bottom: 20px; font-weight: 700; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 7px; color: #003d82; font-weight: 600; font-size: 0.9em; }
+        .form-group input, .form-group select { width: 100%; padding: 11px 13px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95em; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #003d82; }
+        .form-group small { color: #888; font-size: 0.8em; margin-top: 4px; display: block; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background: #e0e0e0; color: #333; }
+        .btn-cancel:hover { background: #ccc; }
+        .btn-save { background: #2e7d32; color: white; }
+        .btn-save:hover { background: #1b5e20; }
+        .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+        .loading { text-align: center; padding: 50px; color: #aaa; grid-column: 1/-1; font-size: 1.05em; }
+        .disponible-toggle { display: flex; align-items: center; gap: 10px; }
+        .toggle-label { font-size: 0.9em; color: #555; }
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-section">
+            <div class="logo-img">📚</div>
+            <div class="logo-text">EduHestim</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" onclick="navigateTo('admindash.html')">📊 Dashboard</div>
+            <div class="nav-item" onclick="navigateTo('PagelistedesUtilisateurs.html')">👥 Utilisateurs</div>
+            <div class="nav-item active">🏫 Salles</div>
+            <div class="nav-item" onclick="navigateTo('GestionClasses.html')">📚 Classes</div>
+            <div class="nav-item" onclick="navigateTo('GestionDemandes-Admin.html')">📋 Demandes</div>
+            <div class="nav-item" onclick="navigateTo('GererEmploiDuTemps.html')">📅 Emplois du Temps</div>
+            <div class="nav-item" onclick="navigateTo('NotifAdmin.html')">🔔 Notifications</div>
+            <div class="nav-item" onclick="navigateTo('ProfilAdmin.html')">👤 Mon Profil</div>
+        </div>
+        <div class="logout-section">
+            <button class="btn-logout" onclick="authSystem.logout()">🚪 Déconnexion</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">🏫 Gestion des Salles</h1>
+            <button class="btn-add" onclick="openAddModal()">➕ Ajouter une Salle</button>
+        </div>
+        <div class="content-area">
+
+            <div class="stats-bar">
+                <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Total</div></div>
+                <div class="stat-card"><div class="stat-num" style="color:#1565c0" id="statNormale">—</div><div class="stat-label">Normales</div></div>
+                <div class="stat-card"><div class="stat-num" style="color:#2e7d32" id="statInfo">—</div><div class="stat-label">Informatique</div></div>
+                <div class="stat-card"><div class="stat-num" style="color:#7b1fa2" id="statAmphi">—</div><div class="stat-label">Amphithéâtres</div></div>
+                <div class="stat-card"><div class="stat-num" style="color:#2e7d32" id="statDispo">—</div><div class="stat-label">Disponibles</div></div>
+            </div>
+
+            <div id="sallesGrid" class="salles-grid">
+                <div class="loading">⏳ Chargement des salles...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ajout/modification -->
+    <div id="salleModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modalTitle">Ajouter une Salle</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nom de la salle *</label>
+                    <input type="text" id="nom" placeholder="Ex: Ghandi S15">
+                </div>
+                <div class="form-group">
+                    <label>Bâtiment *</label>
+                    <input type="text" id="batiment" placeholder="Ex: Ghandi, Stendhal">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select id="type">
+                        <option value="">Sélectionnez...</option>
+                        <option value="Normale">Salle Normale</option>
+                        <option value="Informatique">Salle Informatique</option>
+                        <option value="Amphithéâtre">Amphithéâtre</option>
+                        <option value="Laboratoire">Laboratoire</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Capacité *</label>
+                    <input type="number" id="capacite" min="1" placeholder="Ex: 30">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Équipements</label>
+                <input type="text" id="equipements" placeholder="Ex: Projecteur, Tableau, Climatisation">
+                <small>Séparez les équipements par des virgules</small>
+            </div>
+            <div class="form-group">
+                <label>Disponibilité</label>
+                <div class="disponible-toggle">
+                    <input type="checkbox" id="disponible" checked>
+                    <span class="toggle-label">Salle disponible pour réservation</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal()">Annuler</button>
+                <button class="btn btn-save" id="btnSave" onclick="saveSalle()">💾 Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        // ✅ FIX: appel correct de requireAuth
+        authSystem.requireAuth('administrateur');
+
+        let editingSalleId = null;
+        let allSalles = [];
+
+        function navigateTo(page) { window.location.href = page; }
+
+        function getTypeBadge(type) {
+            const map = {
+                'Normale':      'badge-normale',
+                'Informatique': 'badge-info',
+                'Amphithéâtre': 'badge-amphi',
+                'Laboratoire':  'badge-labo'
+            };
+            return map[type] || 'badge-normale';
+        }
+
+        function getTypeCardClass(type) {
+            const map = { 'Informatique': 'type-info', 'Amphithéâtre': 'type-amphi', 'Laboratoire': 'type-labo' };
+            return map[type] || '';
+        }
+
+        async function loadSalles() {
+            const grid = document.getElementById('sallesGrid');
+            try {
+                allSalles = await dataManager.getSalles();
+
+                // Stats
+                document.getElementById('statTotal').textContent   = allSalles.length;
+                document.getElementById('statNormale').textContent  = allSalles.filter(s => s.type === 'Normale').length;
+                document.getElementById('statInfo').textContent     = allSalles.filter(s => s.type === 'Informatique').length;
+                document.getElementById('statAmphi').textContent    = allSalles.filter(s => s.type === 'Amphithéâtre').length;
+                document.getElementById('statDispo').textContent    = allSalles.filter(s => s.disponible).length;
+
+                if (allSalles.length === 0) {
+                    grid.innerHTML = '<div class="loading">Aucune salle. Cliquez sur "Ajouter une Salle" pour commencer.</div>';
+                    return;
+                }
+
+                grid.innerHTML = allSalles.map(s => `
+                    <div class="salle-card ${getTypeCardClass(s.type)}">
+                        <div class="salle-header">
+                            <div class="salle-title">🏫 ${s.nom}</div>
+                            <span class="type-badge ${getTypeBadge(s.type)}">${s.type}</span>
+                        </div>
+                        <div class="salle-info">👥 <strong>${s.capacite}</strong> places</div>
+                        <div class="salle-info">🏢 ${s.batiment}</div>
+                        <div class="salle-info">${s.disponible ? '🟢 Disponible' : '🔴 Indisponible'}</div>
+                        ${s.equipements && s.equipements.length > 0 ? `
+                            <div class="salle-equip">
+                                ${s.equipements.map(e => `<span class="equip-tag">${e}</span>`).join('')}
+                            </div>` : ''}
+                        <div class="salle-actions">
+                            <button class="btn btn-edit"   onclick="editSalle('${s._id}')">✏️ Modifier</button>
+                            <button class="btn btn-delete" onclick="deleteSalle('${s._id}', '${s.nom.replace(/'/g,"\\'")}')">🗑️ Supprimer</button>
+                        </div>
+                    </div>`).join('');
+            } catch(err) {
+                grid.innerHTML = `<div class="loading" style="color:#c62828;">❌ Erreur : ${err.message}</div>`;
+            }
+        }
+
+        function openAddModal() {
+            editingSalleId = null;
+            document.getElementById('modalTitle').textContent = 'Ajouter une Salle';
+            document.getElementById('nom').value        = '';
+            document.getElementById('batiment').value   = '';
+            document.getElementById('type').value       = '';
+            document.getElementById('capacite').value   = '';
+            document.getElementById('equipements').value = '';
+            document.getElementById('disponible').checked = true;
+            document.getElementById('salleModal').classList.add('show');
+        }
+
+        function editSalle(id) {
+            const s = allSalles.find(x => x._id === id);
+            if (!s) return;
+            editingSalleId = id;
+            document.getElementById('modalTitle').textContent     = 'Modifier la Salle';
+            document.getElementById('nom').value                  = s.nom;
+            document.getElementById('batiment').value             = s.batiment;
+            document.getElementById('type').value                 = s.type;
+            document.getElementById('capacite').value             = s.capacite;
+            document.getElementById('equipements').value          = (s.equipements || []).join(', ');
+            document.getElementById('disponible').checked         = s.disponible !== false;
+            document.getElementById('salleModal').classList.add('show');
+        }
+
+        async function deleteSalle(id, nom) {
+            if (!confirm(`Supprimer la salle "${nom}" ?\n\nCette action est irréversible.`)) return;
+            try {
+                await dataManager.deleteSalle(id);
+                loadSalles();
+            } catch(err) {
+                alert('❌ Erreur : ' + err.message);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('salleModal').classList.remove('show');
+            editingSalleId = null;
+        }
+
+        async function saveSalle() {
+            const nom        = document.getElementById('nom').value.trim();
+            const batiment   = document.getElementById('batiment').value.trim();
+            const type       = document.getElementById('type').value;
+            const capacite   = parseInt(document.getElementById('capacite').value);
+            const equipRaw   = document.getElementById('equipements').value.trim();
+            const disponible = document.getElementById('disponible').checked;
+
+            if (!nom || !batiment || !type || !capacite) {
+                alert('Veuillez remplir tous les champs obligatoires (*)');
+                return;
+            }
+
+            const equipements = equipRaw
+                ? equipRaw.split(',').map(e => e.trim()).filter(e => e)
+                : [];
+
+            const data = { nom, batiment, type, capacite, equipements, disponible };
+
+            const btn = document.getElementById('btnSave');
+            btn.disabled    = true;
+            btn.textContent = '⏳ Enregistrement...';
+
+            try {
+                if (editingSalleId) {
+                    await dataManager.updateSalle(editingSalleId, data);
+                } else {
+                    await dataManager.addSalle(data);
+                }
+                closeModal();
+                loadSalles();
+            } catch(err) {
+                alert('❌ Erreur : ' + err.message);
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = '💾 Enregistrer';
+            }
+        }
+
+        document.getElementById('salleModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('salleModal')) closeModal();
+        });
+
+        loadSalles();
+    </script>
+</body>
+</html>
